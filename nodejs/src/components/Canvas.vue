@@ -8,7 +8,7 @@ import { hasValue } from "./utils";
 import PropertyArea from "./PropertyArea.vue";
 import SearchEntity from "./SearchEntity.vue";
 import ToolbarComponent from "./ToolbarComponent.vue";
-import { loadFile_impl, addNode_impl, addNodeById_impl } from "./processIfc_server"
+import { loadFile_impl, addNode_impl, addNodeById_impl } from "./processIfc_webIfc"
 
 
 // ノードとエッジのデータ

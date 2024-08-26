@@ -198,7 +198,10 @@ function stringifyValue(content: AttrContent | AttrContent[]) {
     return `#${content.value}`;
   } else {
     // 配列でない場合、そのまま文字列に変換します
-    return content.value.toString();
+    if (content.value == null)
+      return "null";
+    else
+      return content.value.toString();
   }
 }
 stringifyValue;

@@ -14,8 +14,8 @@ export interface Attribute {
 }
 
 export interface AttrContent {
-  type: string;
-  value: string | number;
+  type: string; // "value" or "id"
+  value: string | number | null;
 }
 
 // attrName = undefined はノードの左上に接続されているとき
