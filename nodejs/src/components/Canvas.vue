@@ -359,15 +359,7 @@ const selectNode = (node: IfcNode, toggle = false) => {
   }
 };
 
-// ノードを追加するハンドラ
-const addNode_ = (
-  srcId: number,
-  dstId: number,
-  srcName: string,
-  inverse: boolean,
-  dstPosition: Position,
-  idx: number
-) => {
+async function addNode_impl(filepath: string, dstId: number) {
   const config = {
     method: "post",
     url: endpoint + "/get_node",
@@ -376,75 +368,90 @@ const addNode_ = (
       id: dstId,
     },
   };
-  axios(config)
+  return axios(config)
     .then((response) => {
       // レスポンスを処理
       // console.log(response.data);
-      const node = convertToNode(response.data.node);
-
-      // 表示済みならノードを追加しない
-      if (!nodes.value.find((c) => c.id === dstId)) {
-        nodes.value.push(node);
-      }
-
-      // nodeIdと一致するattributeのnameを取得
-      const targetAttr = node.attributes.find((attr) => {
-        if (Array.isArray(attr.content)) {
-          if (attr.content.find((c) => c.type === "id" && c.value === srcId)) {
-            return true;
-          }
-        } else {
-          return attr.content.type === "id" && attr.content.value === srcId;
-        }
-      });
-
-      // ノードの位置をエッジ接続点を合わせるように更新
-      // （ノードが複数あるときは重ならないように位置をずらす）
-      const position = {
-        x: dstPosition.x - (targetAttr?.edgePosition.x ?? 0) + idx * 10,
-        y: dstPosition.y - (targetAttr?.edgePosition.y ?? 22.5) + idx * 10,
-      };
-      node.position = position;
-
-      // エッジ作成
-      const from: { nodeId: number; attrName: string | undefined } = {
-        nodeId: 0,
-        attrName: "",
-      };
-      const to: { nodeId: number; attrName: string | undefined } = {
-        nodeId: 0,
-        attrName: "",
-      };
-      if (inverse) {
-        from.nodeId = dstId;
-        from.attrName = targetAttr?.name;
-        to.nodeId = srcId;
-        to.attrName = srcName;
-      } else {
-        from.nodeId = srcId;
-        from.attrName = srcName;
-        to.nodeId = dstId;
-        to.attrName = targetAttr?.name;
-      }
-
-      const id = `${from.nodeId}-${from.attrName}-${to.nodeId}-${to.attrName}`;
-      if (edges.value.find((c) => c.id === id)) {
-        return;
-      }
-      edges.value.push({
-        id: id,
-        from: from,
-        to: to,
-      });
-    })
-    .catch((error) => {
-      console.log(error);
-    })
-    .finally(() => {
-      // 描画中のエッジを削除
-      updateDrawingEdge(null);
+      return response.data.node;
     });
-};
+}
+
+// ノードを追加するハンドラ
+async function addNode_(
+  srcId: number,
+  dstId: number,
+  srcName: string,
+  inverse: boolean,
+  dstPosition: Position,
+  idx: number
+) {
+  try {
+    const nodedata = await addNode_impl(filepath.value, dstId);
+    const node = convertToNode(nodedata);
+
+    // 表示済みならノードを追加しない
+    if (!nodes.value.find((c) => c.id === dstId)) {
+      nodes.value.push(node);
+    }
+
+    // nodeIdと一致するattributeのnameを取得
+    const targetAttr = node.attributes.find((attr) => {
+      if (Array.isArray(attr.content)) {
+        if (attr.content.find((c) => c.type === "id" && c.value === srcId)) {
+          return true;
+        }
+      } else {
+        return attr.content.type === "id" && attr.content.value === srcId;
+      }
+    });
+
+    // ノードの位置をエッジ接続点を合わせるように更新
+    // （ノードが複数あるときは重ならないように位置をずらす）
+    const position = {
+      x: dstPosition.x - (targetAttr?.edgePosition.x ?? 0) + idx * 10,
+      y: dstPosition.y - (targetAttr?.edgePosition.y ?? 22.5) + idx * 10,
+    };
+    node.position = position;
+
+    // エッジ作成
+    const from: { nodeId: number; attrName: string | undefined } = {
+      nodeId: 0,
+      attrName: "",
+    };
+    const to: { nodeId: number; attrName: string | undefined } = {
+      nodeId: 0,
+      attrName: "",
+    };
+    if (inverse) {
+      from.nodeId = dstId;
+      from.attrName = targetAttr?.name;
+      to.nodeId = srcId;
+      to.attrName = srcName;
+    } else {
+      from.nodeId = srcId;
+      from.attrName = srcName;
+      to.nodeId = dstId;
+      to.attrName = targetAttr?.name;
+    }
+
+    const id = `${from.nodeId}-${from.attrName}-${to.nodeId}-${to.attrName}`;
+    if (edges.value.find((c) => c.id === id)) {
+      return;
+    }
+    edges.value.push({
+      id: id,
+      from: from,
+      to: to,
+    });
+  }
+  catch(error) {
+    console.log(error);
+  }
+  finally {
+    // 描画中のエッジを削除
+    updateDrawingEdge(null);
+  }
+}
 
 const addNode = (
   nodeId: number,
