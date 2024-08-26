@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import axios from "axios";
 
 import NodeComponent from "./NodeComponent.vue";
 import EdgeComponent from "./EdgeComponent.vue";
@@ -9,8 +8,8 @@ import { hasValue } from "./utils";
 import PropertyArea from "./PropertyArea.vue";
 import SearchEntity from "./SearchEntity.vue";
 import ToolbarComponent from "./ToolbarComponent.vue";
+import { loadFile_impl, addNode_impl, addNodeById_impl } from "./processIfc"
 
-const endpoint = import.meta.env.VITE_API_ENDPOINT as string;
 
 // ノードとエッジのデータ
 const nodes = ref<IfcNode[]>([]);
@@ -168,25 +167,6 @@ function endDrag() {
   dragging.value = false;
   rectSelecting.value = false;
   document.body.style.userSelect = "auto";
-}
-
-async function loadFile_impl(selectedFile) {
-
-  // FormData オブジェクトを作成してファイルを追加
-  const formData = new FormData();
-  formData.append("file", selectedFile);
-
-  // ファイルをサーバーにアップロード
-  return axios
-    .post(endpoint + "/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    })
-    .then((response) => {
-      // レスポンスを処理
-      return [response.data.model, response.data.entities, response.data.path];
-    })
 }
 
 // ファイルのアップロード
@@ -359,23 +339,6 @@ const selectNode = (node: IfcNode, toggle = false) => {
   }
 };
 
-async function addNode_impl(filepath: string, dstId: number) {
-  const config = {
-    method: "post",
-    url: endpoint + "/get_node",
-    data: {
-      path: filepath,
-      id: dstId,
-    },
-  };
-  return axios(config)
-    .then((response) => {
-      // レスポンスを処理
-      // console.log(response.data);
-      return response.data.node;
-    });
-}
-
 // ノードを追加するハンドラ
 async function addNode_(
   srcId: number,
@@ -514,22 +477,6 @@ const selectEntity = (id: number) => {
   // 選択された項目の処理
   addNodeById(id, { ...rightClickPosition.value });
 };
-
-async function addNodeById_impl(filepath: string, id: number) {
-  const config = {
-    method: "post",
-    url: endpoint + "/get_node",
-    data: {
-      path: filepath,
-      id: id,
-    },
-  };
-  return axios(config)
-    .then((response) => {
-      // レスポンスを処理
-      return response.data.node;
-    });
-}
 
 async function addNodeById(id: number, dstPosition: Position) {
   try {
