@@ -170,37 +170,46 @@ function endDrag() {
   document.body.style.userSelect = "auto";
 }
 
+async function loadFile_impl(selectedFile) {
+
+  // FormData オブジェクトを作成してファイルを追加
+  const formData = new FormData();
+  formData.append("file", selectedFile);
+
+  // ファイルをサーバーにアップロード
+  return axios
+    .post(endpoint + "/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then((response) => {
+      // レスポンスを処理
+      return [response.data.model, response.data.entities, response.data.path];
+    })
+}
+
 // ファイルのアップロード
-const uploadFile = (event: Event) => {
+async function loadFile(event: Event) {
   const input = event.target as HTMLInputElement;
   if (input.files?.length) {
     const selectedFile = input.files[0];
 
-    // FormData オブジェクトを作成してファイルを追加
-    const formData = new FormData();
-    formData.append("file", selectedFile);
+    try {
+      const [model, entities, path] = await loadFile_impl(selectedFile);
 
-    // ファイルをサーバーにアップロード
-    axios
-      .post(endpoint + "/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((response) => {
-        // レスポンスを処理
-        ifcElements.value = response.data.entities;
-        const node = convertToNode(response.data.model);
-        nodes.value.push(node);
-        filepath.value = response.data.path;
-        console.log(node);
-      })
-      .catch((error) => {
-        // エラー処理
-        console.error("ファイルのアップロードに失敗しました:", error);
-      });
+      ifcElements.value = entities;
+      const node = convertToNode(model);
+      nodes.value.push(node);
+      filepath.value = path;
+      console.log(node);
+    }
+    catch(error) {
+      // エラー処理
+      console.error("ファイルのアップロードに失敗しました:", error);
+    }
   }
-};
+}
 
 // レスポンスデータをNodeに変換
 function convertToNode(data: any): IfcNode {
@@ -552,7 +561,7 @@ const closeSearch = () => {
 <template>
   <input
     type="file"
-    @change="uploadFile"
+    @change="loadFile"
     class="fileInput"
     v-if="filepath === ''"
   />
