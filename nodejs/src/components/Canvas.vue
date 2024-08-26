@@ -364,7 +364,7 @@ async function addNode_impl(filepath: string, dstId: number) {
     method: "post",
     url: endpoint + "/get_node",
     data: {
-      path: filepath.value,
+      path: filepath,
       id: dstId,
     },
   };
@@ -514,30 +514,38 @@ const selectEntity = (id: number) => {
   // 選択された項目の処理
   addNodeById(id, { ...rightClickPosition.value });
 };
-const addNodeById = (id: number, dstPosition: Position) => {
+
+async function addNodeById_impl(filepath: string, id: number) {
   const config = {
     method: "post",
     url: endpoint + "/get_node",
     data: {
-      path: filepath.value,
+      path: filepath,
       id: id,
     },
   };
-  axios(config)
+  return axios(config)
     .then((response) => {
       // レスポンスを処理
-      const node = convertToNode(response.data.node);
-
-      // 表示済みならノードを追加しない
-      if (!nodes.value.find((c) => c.id === node.id)) {
-        node.position = dstPosition;
-        nodes.value.push(node);
-      }
-    })
-    .catch((error) => {
-      console.log(error);
+      return response.data.node;
     });
-};
+}
+
+async function addNodeById(id: number, dstPosition: Position) {
+  try {
+    const nodedata = await addNodeById_impl(filepath.value, id);
+    const node = convertToNode(response.data.node);
+
+    // 表示済みならノードを追加しない
+    if (!nodes.value.find((c) => c.id === node.id)) {
+      node.position = dstPosition;
+      nodes.value.push(node);
+    }
+  }
+  catch(error) {
+    console.log(error);
+  }
+}
 
 const getRelativePosition = (event: MouseEvent) => {
   const container = zoomContainer.value;
