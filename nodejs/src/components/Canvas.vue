@@ -8,7 +8,7 @@ import { hasValue } from "./utils";
 import PropertyArea from "./PropertyArea.vue";
 import SearchEntity from "./SearchEntity.vue";
 import ToolbarComponent from "./ToolbarComponent.vue";
-import { loadFile_impl, addNode_impl, addNodeById_impl } from "./processIfc"
+import { loadFile_impl, addNode_impl, addNodeById_impl } from "./processIfc_server"
 
 
 // ノードとエッジのデータ
@@ -179,41 +179,15 @@ async function loadFile(event: Event) {
       const [model, entities, path] = await loadFile_impl(selectedFile);
 
       ifcElements.value = entities;
-      const node = convertToNode(model);
-      nodes.value.push(node);
+      nodes.value.push(model);
       filepath.value = path;
-      console.log(node);
+      console.log(model);
     }
     catch(error) {
       // エラー処理
       console.error("ファイルのアップロードに失敗しました:", error);
     }
   }
-}
-
-// レスポンスデータをNodeに変換
-function convertToNode(data: any): IfcNode {
-  const node: IfcNode = {
-    id: data.id,
-    type: data.type,
-    attributes: [],
-    position: { x: 40, y: 60 },
-  };
-
-  // attributes
-  let count = 0;
-  for (const attr of data.attributes) {
-    const attribute = {
-      name: attr.name,
-      content: attr.content,
-      edgePosition: { x: attr.inverse ? 0 : 200, y: 68 + count * 29 },
-      inverse: attr.inverse,
-    };
-    hasValue(attr.content) && count++;
-    node.attributes.push(attribute);
-  }
-
-  return node;
 }
 
 // ノードの位置を更新するハンドラ
@@ -349,8 +323,7 @@ async function addNode_(
   idx: number
 ) {
   try {
-    const nodedata = await addNode_impl(filepath.value, dstId);
-    const node = convertToNode(nodedata);
+    const node = await addNode_impl(filepath.value, dstId);
 
     // 表示済みならノードを追加しない
     if (!nodes.value.find((c) => c.id === dstId)) {
@@ -480,8 +453,7 @@ const selectEntity = (id: number) => {
 
 async function addNodeById(id: number, dstPosition: Position) {
   try {
-    const nodedata = await addNodeById_impl(filepath.value, id);
-    const node = convertToNode(response.data.node);
+    const node = await addNodeById_impl(filepath.value, id);
 
     // 表示済みならノードを追加しない
     if (!nodes.value.find((c) => c.id === node.id)) {

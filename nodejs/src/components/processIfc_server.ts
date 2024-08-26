@@ -1,14 +1,15 @@
-
 import axios from "axios";
+import { IfcNode } from "./interfaces";
+import { hasValue } from "./utils";
 
 const endpoint = import.meta.env.VITE_API_ENDPOINT as string;
 
 
-export async function loadFile_impl(selectedFile) {
+export async function loadFile_impl(ifcFile: string) {
 
   // FormData オブジェクトを作成してファイルを追加
   const formData = new FormData();
-  formData.append("file", selectedFile);
+  formData.append("file", ifcFile);
 
   // ファイルをサーバーにアップロード
   return axios
@@ -19,8 +20,8 @@ export async function loadFile_impl(selectedFile) {
     })
     .then((response) => {
       // レスポンスを処理
-      return [response.data.model, response.data.entities, response.data.path];
-    })
+      return [convertToNode(response.data.model), response.data.entities, response.data.path];
+    });
 }
 
 export async function addNode_impl(filepath: string, dstId: number) {
@@ -36,7 +37,7 @@ export async function addNode_impl(filepath: string, dstId: number) {
     .then((response) => {
       // レスポンスを処理
       // console.log(response.data);
-      return response.data.node;
+      return convertToNode(response.data.node);
     });
 }
 
@@ -52,7 +53,32 @@ export async function addNodeById_impl(filepath: string, id: number) {
   return axios(config)
     .then((response) => {
       // レスポンスを処理
-      return response.data.node;
+      return convertToNode(response.data.node);
     });
+}
+
+// レスポンスデータをNodeに変換
+function convertToNode(data: any): IfcNode {
+  const node: IfcNode = {
+    id: data.id,
+    type: data.type,
+    attributes: [],
+    position: { x: 40, y: 60 },
+  };
+
+  // attributes
+  let count = 0;
+  for (const attr of data.attributes) {
+    const attribute = {
+      name: attr.name,
+      content: attr.content,
+      edgePosition: { x: attr.inverse ? 0 : 200, y: 68 + count * 29 },
+      inverse: attr.inverse,
+    };
+    hasValue(attr.content) && count++;
+    node.attributes.push(attribute);
+  }
+
+  return node;
 }
 
