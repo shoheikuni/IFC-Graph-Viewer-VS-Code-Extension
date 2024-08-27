@@ -6,7 +6,7 @@ const endpoint = import.meta.env.VITE_API_ENDPOINT as string;
 
 let filepath = "";
 
-export async function loadFile_impl(ifcFile: File) {
+export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {
 
   // FormData オブジェクトを作成してファイルを追加
   const formData = new FormData();
@@ -25,7 +25,7 @@ export async function loadFile_impl(ifcFile: File) {
     });
 }
 
-export async function addNode_impl(dstId: number) {
+export async function addNode_impl(dstId: number): Promise<IfcNode> {
   const config = {
     method: "post",
     url: endpoint + "/get_node",
@@ -41,7 +41,7 @@ export async function addNode_impl(dstId: number) {
     });
 }
 
-export async function addNodeById_impl(id: number) {
+export async function addNodeById_impl(id: number): Promise<IfcNode> {
   const config = {
     method: "post",
     url: endpoint + "/get_node",
