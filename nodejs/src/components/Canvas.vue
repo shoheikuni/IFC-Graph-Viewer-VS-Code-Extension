@@ -48,8 +48,7 @@ const rectSelecting = ref(false);
 // 右クリック位置
 const rightClickPosition = ref({ x: 0, y: 0 });
 
-// アップロードしたファイルパス
-const filepath = ref<string>("");
+const fileOpen = ref<Boolean>(false);
 
 // 描画領域の拡大縮小、移動
 const scale = ref(1);
@@ -176,11 +175,11 @@ async function loadFile(event: Event) {
     const selectedFile = input.files[0];
 
     try {
-      const [model, entities, path] = await loadFile_impl(selectedFile);
+      const [model, entities] = await loadFile_impl(selectedFile);
 
       ifcElements.value = entities;
       nodes.value.push(model);
-      filepath.value = path;
+      fileOpen.value = true;
       console.log(model);
     }
     catch(error) {
@@ -323,7 +322,7 @@ async function addNode_(
   idx: number
 ) {
   try {
-    const node = await addNode_impl(filepath.value, dstId);
+    const node = await addNode_impl(dstId);
 
     // 表示済みならノードを追加しない
     if (!nodes.value.find((c) => c.id === dstId)) {
@@ -453,7 +452,7 @@ const selectEntity = (id: number) => {
 
 async function addNodeById(id: number, dstPosition: Position) {
   try {
-    const node = await addNodeById_impl(filepath.value, id);
+    const node = await addNodeById_impl(id);
 
     // 表示済みならノードを追加しない
     if (!nodes.value.find((c) => c.id === node.id)) {
@@ -497,13 +496,8 @@ const closeSearch = () => {
     type="file"
     @change="loadFile"
     class="fileInput"
-    v-if="filepath === ''"
+    v-if="!fileOpen"
   />
-  <!--
-  <h4 v-else class="fileInput" style="margin-top: 0">
-    {{ filepath.split("/")[1].replace(/\..*?$/, "") }}
-  </h4>
- -->
 
   <div class="container">
     <div

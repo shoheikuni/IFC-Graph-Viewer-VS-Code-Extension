@@ -4,8 +4,9 @@ import { hasValue } from "./utils";
 
 const endpoint = import.meta.env.VITE_API_ENDPOINT as string;
 
+let filepath = "";
 
-export async function loadFile_impl(ifcFile: string) {
+export async function loadFile_impl(ifcFile: File) {
 
   // FormData オブジェクトを作成してファイルを追加
   const formData = new FormData();
@@ -19,12 +20,12 @@ export async function loadFile_impl(ifcFile: string) {
       },
     })
     .then((response) => {
-      // レスポンスを処理
-      return [convertToNode(response.data.model), response.data.entities, response.data.path];
+      filepath = response.data.path;
+      return [convertToNode(response.data.model), response.data.entities];
     });
 }
 
-export async function addNode_impl(filepath: string, dstId: number) {
+export async function addNode_impl(dstId: number) {
   const config = {
     method: "post",
     url: endpoint + "/get_node",
@@ -35,13 +36,12 @@ export async function addNode_impl(filepath: string, dstId: number) {
   };
   return axios(config)
     .then((response) => {
-      // レスポンスを処理
       // console.log(response.data);
       return convertToNode(response.data.node);
     });
 }
 
-export async function addNodeById_impl(filepath: string, id: number) {
+export async function addNodeById_impl(id: number) {
   const config = {
     method: "post",
     url: endpoint + "/get_node",
@@ -52,7 +52,6 @@ export async function addNodeById_impl(filepath: string, id: number) {
   };
   return axios(config)
     .then((response) => {
-      // レスポンスを処理
       return convertToNode(response.data.node);
     });
 }
