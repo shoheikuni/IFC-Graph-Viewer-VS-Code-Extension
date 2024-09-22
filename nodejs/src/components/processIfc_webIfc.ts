@@ -40,10 +40,9 @@ export async function addNodeById_impl(id: number): Promise<IfcNode> {
 }
 
 function refersToOtherId(lineObjectValue: any): boolean {
-  const handleType: number = 5; // magic number
   if (!lineObjectValue) return false;
   if (lineObjectValue instanceof WebIFC.Handle) return true;
-  return lineObjectValue.type == handleType;
+  return lineObjectValue.type == WebIFC.REF;
 }
 
 function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse: boolean, attrIdx: number): Attribute {
