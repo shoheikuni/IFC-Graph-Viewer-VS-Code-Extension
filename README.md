@@ -19,7 +19,6 @@ IFCファイルのグラフ可視化アプリ
 ## インストール
 
 ```sh
-cd nodejs
 npm install
 ```
 
