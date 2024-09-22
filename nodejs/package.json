@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "dev": "cp node_modules/web-ifc/web-ifc.wasm . && vite",
+    "build": "vue-tsc && vite build && cp node_modules/web-ifc/web-ifc.wasm dist",
     "preview": "vite preview"
   },
   "dependencies": {
