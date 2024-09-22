@@ -47,17 +47,25 @@ function refersToOtherId(lineObjectValue: any): boolean {
 }
 
 function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse: boolean, attrIdx: number): Attribute {
+  const omittedId = 0; // #0 is the id for the omitted parameter "*"
+
   let content: AttrContent | Array<AttrContent>;
 
   if (lineObjectValue instanceof Array) {
     content = lineObjectValue.map(elem => {
-      const attrType = refersToOtherId(elem) ? "id" : "value";
-      return { type: attrType, value: elem.value };
-    });
+      if (refersToOtherId(elem)) {
+        const value = elem.value == omittedId ? null : elem.value;
+        return { type: "id", value: value };
+      }
+      else {
+        return { type: "value", value: elem.value };
+      }
+    }).filter(content => !!content);
   }
   else if (refersToOtherId(lineObjectValue)) {
     console.assert(!keyIsInverse);
-    content = { type: "id", value: lineObjectValue.value };
+    const value = lineObjectValue.value == omittedId ? null : lineObjectValue.value;
+    content = { type: "id", value: value };
   }
   else if (lineObjectValue == null) {
     console.assert(!keyIsInverse);
