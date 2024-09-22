@@ -9,29 +9,14 @@ IFCファイルのグラフ可視化アプリ
 以下で確認
 
 - Windows10
-- Google Chrome: 120.0.6099.72
-- node:  16.15.0
-- npm:  9.7.1
-- Python:  3.9.10
-- IfcOpenShell: 0.7.0
+- Google Chrome: 128.0.6613.138
+- node:  22.6.0
+- npm:  10.8.2
+- web-ifc: 0.0.58
+
+フロントエンドをVite+Vue+TSで構築しており、フロントエンド内でweb-ifcを使ってIFCデータを処理する。
 
 ## インストール
-
-バックエンドをPythonのFlask、フロントエンドをVite+Vue+TSで構築しているので、PythonとNode.jsの両方の環境を作る必要がある。
-
-### Python
-
-```sh
-cd python
-python -m venv env
-env\Scripts\activate.bat
-pip install -r requirements.txt
-```
-
-`IfcOpenShell`は[公式](https://blenderbim.org/docs-python/ifcopenshell-python/installation.html)から、
-Pre-built packagesをダウンロードして`env/Lib/site-packages`に格納する。
-
-### Node.js
 
 ```sh
 cd nodejs
@@ -42,19 +27,13 @@ npm install
 
 ### 方法1
 
-Pythonでバックエンド起動する。
-
-```sh
-python server.py
-```
-
 Node.jsでフロントエンド起動する。
 
 ```sh
 npm run dev
 ```
 
-両方を起動した状態で「localhost:5173」にブラウザでアクセスする
+起動した状態で「localhost:5173」にブラウザでアクセスする
 
 ### 方法2：ビルド
 
@@ -64,13 +43,13 @@ npm run dev
 npm run build
 ```
 
-作成された「nodejs/dist」を「python/dist」に移動し、Pythonでバックエンド起動する。
+フロントエンドをプレビューする。
 
 ```sh
-python server.py
+npm run preview
 ```
 
-Pythonを動かした状態で「localhost:5000」にブラウザでアクセスする。
+この状態で「localhost:4173」にブラウザでアクセスする。
 
 ## 使い方簡易説明
 
