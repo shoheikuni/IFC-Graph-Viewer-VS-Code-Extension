@@ -4,21 +4,24 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "cp node_modules/web-ifc/web-ifc.wasm . && vite",
-    "build": "vue-tsc && vite build && cp node_modules/web-ifc/web-ifc.wasm dist",
-    "preview": "vite preview"
+    "start": "cp node_modules/web-ifc/web-ifc.wasm . && vite",
+    "build": "vue-tsc --noEmit && vite build && cp node_modules/web-ifc/web-ifc.wasm build/",
+    "preview": "vite preview --port 5050",
+    "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "axios": "^1.7.4",
+    "axios": "^1.7.7",
     "vite-svg-loader": "^5.1.0",
     "vue": "^3.3.4",
     "web-ifc": "^0.0.58"
   },
   "devDependencies": {
     "@types/node": "^22.5.5",
+    "@types/vscode-webview": "^1.57.0",
     "@vitejs/plugin-vue": "^4.2.3",
+    "@vue/tsconfig": "^0.5.1",
     "typescript": "^5.0.2",
     "vite": "^4.5.2",
-    "vue-tsc": "^1.8.5"
+    "vue-tsc": "^2.1.6"
   }
 }

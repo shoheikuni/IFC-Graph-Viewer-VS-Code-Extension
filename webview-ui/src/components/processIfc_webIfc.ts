@@ -4,9 +4,12 @@ import { hasValue } from "./utils";
 
 
 const ifcapi = new WebIFC.IfcAPI();
-(async function() {
-  await ifcapi.Init();
-})();
+export function initWebIfc(wasmPath: string) {
+  ifcapi.SetWasmPath(wasmPath);
+  (async function() {
+    await ifcapi.Init();
+  })();
+}
 
 let modelID: number = -1;
 
