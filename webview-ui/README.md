@@ -1,6 +1,6 @@
 # IFC graph viewer
 
-IFCファイルのグラフ可視化アプリ
+IFCファイルのグラフ可視化拡張機能
 
 ![app](images/viewer.jpg)
 
@@ -9,49 +9,12 @@ IFCファイルのグラフ可視化アプリ
 以下で確認
 
 - Windows10
-- Google Chrome: 128.0.6613.138
-- node:  22.6.0
-- npm:  10.8.2
-- web-ifc: 0.0.58
+- Visual Studio Code Version 1.93.1
 
-フロントエンドをVite+Vue+TSで構築しており、フロントエンド内でweb-ifcを使ってIFCデータを処理する。
-
-## インストール
-
-```sh
-npm install
-```
-
-## 実行方法
-
-### 方法1
-
-Node.jsでフロントエンド起動する。
-
-```sh
-npm run dev
-```
-
-起動した状態で「localhost:5173」にブラウザでアクセスする
-
-### 方法2：ビルド
-
-フロントエンドをビルドする。
-
-```sh
-npm run build
-```
-
-フロントエンドをプレビューする。
-
-```sh
-npm run preview
-```
-
-この状態で「localhost:4173」にブラウザでアクセスする。
 
 ## 使い方簡易説明
 
+- コマンドパレットで`Open IFC Graph Viewer`を実行
 - 「ファイルの選択」からIFCファイルを選択する
   - 対応しているファイル形式は `.ifc` のみ
 - ノードを選択すると画面右にノードの情報が表示される
