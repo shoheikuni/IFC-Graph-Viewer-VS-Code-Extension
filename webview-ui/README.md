@@ -8,8 +8,9 @@ IFCファイルのグラフ可視化拡張機能
 
 以下で確認
 
-- Windows10
-- Visual Studio Code Version 1.93.1
+- Windows 11
+- Visual Studio Code Version 1.101.2
+- npm 10.9.2
 
 
 ## 使い方簡易説明
