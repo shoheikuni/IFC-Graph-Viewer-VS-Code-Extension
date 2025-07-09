@@ -14,7 +14,9 @@ const stringifyContent = (content: AttrContent | AttrContent[]) => {
       if (content[0].type === "id") {
         return content.map((c) => `#${c.value}`).join(", ");
       } else {
-        return content.map((c) => `${c.value}`).join(", ");
+        return content.map((c) => {
+          return (c.value instanceof Array) ? `(${c.value})` : `${c.value}`;
+        }).join(", ");
       }
     }
   } else {
