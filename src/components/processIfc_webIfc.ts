@@ -39,7 +39,7 @@ export async function addNodeById_impl(id: number): Promise<IfcNode> {
   return getIfcNode(id);
 }
 
-function refersToOtherId(lineObjectValue: any): boolean {
+function refersToAnotherId(lineObjectValue: any): boolean {
   if (!lineObjectValue) return false;
   if (lineObjectValue instanceof WebIFC.Handle) return true;
   return lineObjectValue.type == WebIFC.REF;
@@ -52,7 +52,7 @@ function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse
 
   if (lineObjectValue instanceof Array) {
     content = lineObjectValue.map(elem => {
-      if (refersToOtherId(elem)) {
+      if (refersToAnotherId(elem)) {
         const value = elem.value == omittedId ? null : elem.value;
         return { type: "id", value: value };
       }
@@ -61,7 +61,7 @@ function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse
       }
     }).filter(content => !!content);
   }
-  else if (refersToOtherId(lineObjectValue)) {
+  else if (refersToAnotherId(lineObjectValue)) {
     console.assert(!keyIsInverse);
     const value = lineObjectValue.value == omittedId ? null : lineObjectValue.value;
     content = { type: "id", value: value };
