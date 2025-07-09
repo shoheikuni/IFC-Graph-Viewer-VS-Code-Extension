@@ -1,5 +1,5 @@
 import * as WebIFC from "web-ifc"
-import { Attribute, AttrContent, IfcNode } from "./interfaces";
+import { Attribute, AttrContent, AttrContentValueType, AttrContentIdType, IfcNode } from "./interfaces";
 import { hasValue } from "./utils";
 
 
@@ -50,34 +50,49 @@ function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse
 
   let content: AttrContent | Array<AttrContent>;
 
+  const extractId = (obj: any): AttrContentIdType => { return obj.value == omittedId ? null : obj.value; };
+  const extractValue = (obj: any): AttrContentValueType => {
+    if (obj instanceof Array) {
+      if (obj[0].type === WebIFC.REAL) { // ifじゃなくてassertであるべき？
+        const values: Array<number> = obj.map(elem => elem.value);
+        return values;
+      }
+    }
+    return obj.value;
+  };
+
   if (lineObjectValue instanceof Array) {
-    content = lineObjectValue.map(elem => {
-      if (refersToAnotherId(elem)) {
-        const value = elem.value == omittedId ? null : elem.value;
-        return { type: "id", value: value };
-      }
-      else {
-        return { type: "value", value: elem.value };
-      }
-    }).filter(content => !!content);
+    if (lineObjectValue.length == 0) {
+      content = [];
+    }
+    else if (lineObjectValue[0].type === WebIFC.REAL) {
+      // 座標
+      content = { type: "value", value: extractValue(lineObjectValue) };
+    }
+    else {
+      // リスト
+      content = lineObjectValue.map(elem => {
+        if (refersToAnotherId(elem)) { // IDリスト
+          return { type: "id", value: extractId(elem) };
+        }
+        else { // テキストリスト or 座標リスト
+          return { type: "value", value: extractValue(elem) };
+        }
+      }).filter(content => !!content); // このフィルタ意味ある？
+    }
   }
   else if (refersToAnotherId(lineObjectValue)) {
     console.assert(!keyIsInverse);
-    const value = lineObjectValue.value == omittedId ? null : lineObjectValue.value;
-    content = { type: "id", value: value };
+    content = { type: "id", value: extractId(lineObjectValue) };
   }
   else if (lineObjectValue == null) {
     console.assert(!keyIsInverse);
     content = { type: "value", value: null };
   }
-  else if (typeof lineObjectValue == "number" || typeof lineObjectValue == "string") {
-    console.assert(!keyIsInverse);
-    content = { type: "value", value: lineObjectValue };
-  }
   else {
     console.assert(!keyIsInverse);
     console.log(lineObjectValue.name); // IFCクラス名。使わない。
-    content = { type: "value", value: lineObjectValue.value };
+    content = { type: "value", value: extractValue(lineObjectValue) };
   }
 
   return {
