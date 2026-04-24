@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import Canvas from "./components/Canvas.vue";
-import { onMounted } from 'vue';
-import { initWebIfc } from "./components/processIfc_webIfc"
+import { onMounted, onUnmounted } from 'vue';
+import { initProcessIfc, deinitProcessIfc } from "./components/processIfc_webIfc"
 
 onMounted(() => {
-  window.addEventListener('message', (msg: MessageEvent) => {
+  window.addEventListener('message', async (msg: MessageEvent) => {
       switch (msg.data.type) {
         case 'wasmDir': {
-          initWebIfc(msg.data.value + "/");
+          await initProcessIfc(msg.data.value + "/");
           break;
         }
       }
     })
+});
+onUnmounted(() => {
+  deinitProcessIfc();
 });
 </script>
 

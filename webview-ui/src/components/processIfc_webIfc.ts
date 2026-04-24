@@ -3,19 +3,28 @@ import { Attribute, AttrContent, AttrContentValueType, AttrContentIdType, IfcNod
 import { hasValue } from "./utils";
 
 
+/* このモジュールprocessIfc_webIfc.tsは、processIfc_server.tsにインターフェースを合わせ、同じシグネチャの関数を公開している。
+ * processIfc_server.tsは状態を持つ（開いたIFCファイルを保持している）ので、それに合わせてこのモジュールもglobal_modelIDという状態を持つ。
+ * また、状態の初期化・後始末のためのinitProcessIfc, deinitProcessIfcという関数を公開している。
+ */
+
+let global_modelID: number = -1;
+
 const ifcapi = new WebIFC.IfcAPI();
-export function initWebIfc(wasmPath: string) {
+export async function initProcessIfc(wasmPath: string) {
   ifcapi.SetWasmPath(wasmPath);
-  (async function() {
-    await ifcapi.Init();
-  })();
+  await ifcapi.Init();
 }
 
-let modelID: number = -1;
+export function deinitProcessIfc() {
+  ifcapi.Dispose();
+}
+
 
 const settings = {
   COORDINATE_TO_ORIGIN: true
 };
+
 
 function collectExpressIDs(modelID: number): { [key: string]: number[] } {
   let entities: { [key: string]: number[] } = {};
@@ -29,14 +38,21 @@ function collectExpressIDs(modelID: number): { [key: string]: number[] } {
 }
 
 function loadBytes(bytes: Uint8Array): [IfcNode, { [key: string]: number[] }] {
-  console.log("[IFC] OpenModel start");
-  modelID = ifcapi.OpenModel(bytes, settings);
-  console.log("[IFC] OpenModel success", modelID);
 
-  const entities = collectExpressIDs(modelID);
+  if (global_modelID !== -1) {
+    ifcapi.CloseModel(global_modelID);
+  }
+
+  console.log("[IFC] OpenModel start");
+  global_modelID = ifcapi.OpenModel(bytes, settings);
+  console.log("[IFC] OpenModel success", global_modelID);
+
+  const entities = collectExpressIDs(global_modelID);
   const ifcProjectId = entities["IfcProject"][0];
 
-  return [getIfcNode(ifcProjectId), entities];
+  const ifcProjectNode = getIfcNode(global_modelID, ifcProjectId);
+
+  return [ifcProjectNode, entities];
 }
 
 export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {
@@ -45,11 +61,11 @@ export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: st
 }
 
 export async function addNode_impl(id: number): Promise<IfcNode> {
-  return getIfcNode(id);
+  return getIfcNode(global_modelID, id);
 }
 
 export async function addNodeById_impl(id: number): Promise<IfcNode> {
-  return getIfcNode(id);
+  return getIfcNode(global_modelID, id);
 }
 
 function refersToAnotherId(lineObjectValue: any): boolean {
@@ -116,7 +132,7 @@ function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse
   };
 }
 
-function getIfcNode(id: number): IfcNode {
+function getIfcNode(modelID: number, id: number): IfcNode {
   const lineObject = ifcapi.GetLine(modelID, id, false, false);
   const lineObjectWithInverses = ifcapi.GetLine(modelID, id, false, true);
 
