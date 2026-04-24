@@ -17,10 +17,7 @@ const settings = {
   COORDINATE_TO_ORIGIN: true
 };
 
-export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {
-  const rawFileData = await ifcFile.arrayBuffer();
-  modelID = ifcapi.OpenModel(new Uint8Array(rawFileData), settings); // いつ、どうやって閉じるの？
-
+function collectExpressIDs(modelID: number): { [key: string]: number[] } {
   let entities: { [key: string]: number[] } = {};
   for (const expressID of ifcapi.GetAllLines(modelID)) {
     const lineEntity = ifcapi.GetLine(modelID, expressID);
@@ -28,10 +25,23 @@ export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: st
     if (!entities[ifcClassName]) entities[ifcClassName] = [];
     entities[ifcClassName].push(expressID);
   }
+  return entities;
+}
 
+function loadBytes(bytes: Uint8Array): [IfcNode, { [key: string]: number[] }] {
+  console.log("[IFC] OpenModel start");
+  modelID = ifcapi.OpenModel(bytes, settings);
+  console.log("[IFC] OpenModel success", modelID);
+
+  const entities = collectExpressIDs(modelID);
   const ifcProjectId = entities["IfcProject"][0];
 
   return [getIfcNode(ifcProjectId), entities];
+}
+
+export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {
+  const rawFileData = await ifcFile.arrayBuffer();
+  return loadBytes(new Uint8Array(rawFileData));
 }
 
 export async function addNode_impl(id: number): Promise<IfcNode> {
