@@ -66,9 +66,6 @@ export class HelloWorldPanel {
       );
 
       HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
-
-      const wasmDir = getUri(HelloWorldPanel.currentPanel._panel.webview, extensionUri, ["webview-ui", "build", ""]);
-      panel.webview.postMessage({ type: 'wasmDir', value: wasmDir.toString() });
     }
   }
 
@@ -107,6 +104,8 @@ export class HelloWorldPanel {
     // The JS file from the Vue build output
     const scriptUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.js"]);
 
+    const wasmDir = getUri(webview, extensionUri, ["webview-ui", "build"]).toString() + "/";
+
     const nonce = getNonce();
 
     // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
@@ -131,6 +130,13 @@ export class HelloWorldPanel {
         </head>
         <body>
           <div id="app"></div>
+
+	  <!-- wasmDirをグローバル変数として埋め込む -->
+	  <script nonce="${nonce}">
+	    window.__WASM_DIR__ = "${wasmDir}";
+	    console.log('[Webview bootstrap] __WASM_DIR__ =', window.__WASM_DIR__);
+	  </script>
+
           <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
         </body>
       </html>

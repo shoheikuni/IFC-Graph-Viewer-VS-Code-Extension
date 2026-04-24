@@ -3,15 +3,10 @@ import Canvas from "./components/Canvas.vue";
 import { onMounted, onUnmounted } from 'vue';
 import { initProcessIfc, deinitProcessIfc } from "./components/processIfc_webIfc"
 
-onMounted(() => {
-  window.addEventListener('message', async (msg: MessageEvent) => {
-      switch (msg.data.type) {
-        case 'wasmDir': {
-          await initProcessIfc(msg.data.value + "/");
-          break;
-        }
-      }
-    })
+onMounted(async () => {
+  const wasmDir = (window as any).__WASM_DIR__;
+  console.log("[App] wasmDir =", wasmDir);
+  await initProcessIfc(wasmDir);
 });
 onUnmounted(() => {
   deinitProcessIfc();
