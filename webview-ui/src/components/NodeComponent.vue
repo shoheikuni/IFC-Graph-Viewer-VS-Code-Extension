@@ -271,6 +271,7 @@ const isId = (content: AttrContent | AttrContent[]): boolean => {
   width: 200px;
   background-color: #fafafacc;
   user-select: none;
+  color: #000;
 }
 
 .node-header {
