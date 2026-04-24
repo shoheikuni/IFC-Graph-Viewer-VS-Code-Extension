@@ -43,7 +43,7 @@ export class HelloWorldPanel {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri) {
+  public static render(extensionUri: Uri, ifcText: string) {
     if (HelloWorldPanel.currentPanel) {
       // If the webview panel already exists reveal it
       HelloWorldPanel.currentPanel._panel.reveal(ViewColumn.One);
@@ -66,6 +66,13 @@ export class HelloWorldPanel {
       );
 
       HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
+
+      // IFCデータをWebviewに送る
+      panel.webview.postMessage({
+        type: "loadIfc",
+	data: ifcText,
+      });
+
     }
   }
 

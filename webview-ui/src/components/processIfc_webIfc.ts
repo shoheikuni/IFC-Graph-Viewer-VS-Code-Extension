@@ -9,6 +9,7 @@ import { hasValue } from "./utils";
  */
 
 let global_modelID: number = -1;
+let initialized: boolean = false;
 
 const ifcapi = new WebIFC.IfcAPI();
 export async function initProcessIfc(wasmPath: string) {
@@ -18,6 +19,10 @@ export async function initProcessIfc(wasmPath: string) {
 
 export function deinitProcessIfc() {
   ifcapi.Dispose();
+}
+
+export function processIfcInitialized() {
+  return initialized;
 }
 
 
@@ -53,6 +58,11 @@ function loadBytes(bytes: Uint8Array): [IfcNode, { [key: string]: number[] }] {
   const ifcProjectNode = getIfcNode(global_modelID, ifcProjectId);
 
   return [ifcProjectNode, entities];
+}
+
+export function loadIfcFromText_impl(ifcText: string): [IfcNode, { [key: string]: number[]}] {
+  const encoder = new TextEncoder();
+  return loadBytes(encoder.encode(ifcText));
 }
 
 export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {

@@ -8,7 +8,7 @@ import { hasValue } from "./utils";
 import PropertyArea from "./PropertyArea.vue";
 import SearchEntity from "./SearchEntity.vue";
 import ToolbarComponent from "./ToolbarComponent.vue";
-import { loadFile_impl, addNode_impl, addNodeById_impl } from "./processIfc_webIfc"
+import { loadFile_impl, addNode_impl, addNodeById_impl, loadIfcFromText_impl } from "./processIfc_webIfc"
 
 
 // ノードとエッジのデータ
@@ -191,6 +191,18 @@ async function loadFile(event: Event) {
     }
   }
 }
+
+function loadIfcFromText(ifcText: string) {
+  try {
+    const [model, entities] = loadIfcFromText_impl(ifcText);
+    putModelOnCanvas(model, entities);
+  }
+  catch(error) {
+    // エラー処理
+    console.error("ファイルの読み込みに失敗しました:", error);
+  }
+}
+
 
 // ノードの位置を更新するハンドラ
 const updateNodePosition = (moveDistance: { x: number; y: number }) => {
@@ -492,6 +504,8 @@ const handleRightClick = (event: MouseEvent) => {
 const closeSearch = () => {
   showSearch.value = false;
 };
+
+defineExpose({loadIfcFromText});
 </script>
 
 <template>
