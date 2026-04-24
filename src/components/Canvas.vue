@@ -168,7 +168,6 @@ function endDrag() {
   document.body.style.userSelect = "auto";
 }
 
-// ファイルのアップロード
 async function loadFile(event: Event) {
   const input = event.target as HTMLInputElement;
   if (input.files?.length) {
@@ -184,7 +183,7 @@ async function loadFile(event: Event) {
     }
     catch(error) {
       // エラー処理
-      console.error("ファイルのアップロードに失敗しました:", error);
+      console.error("ファイルの読み込みに失敗しました:", error);
     }
   }
 }
