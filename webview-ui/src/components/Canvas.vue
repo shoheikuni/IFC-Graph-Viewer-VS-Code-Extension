@@ -168,6 +168,13 @@ function endDrag() {
   document.body.style.userSelect = "auto";
 }
 
+function putModelOnCanvas(model: IfcNode, entities: { [key: string]: number[] }) {
+  ifcElements.value = entities;
+  nodes.value.push(model);
+  fileOpen.value = true;
+  console.log(model);
+}
+
 async function loadFile(event: Event) {
   const input = event.target as HTMLInputElement;
   if (input.files?.length) {
@@ -176,10 +183,7 @@ async function loadFile(event: Event) {
     try {
       const [model, entities] = await loadFile_impl(selectedFile);
 
-      ifcElements.value = entities;
-      nodes.value.push(model);
-      fileOpen.value = true;
-      console.log(model);
+      putModelOnCanvas(model, entities);
     }
     catch(error) {
       // エラー処理
