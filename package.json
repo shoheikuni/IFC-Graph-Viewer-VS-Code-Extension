@@ -14,7 +14,23 @@
         "command": "ifc-graph-viewer.openViewer",
         "title": "Open IFC Graph Viewer"
       }
-    ]
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+	  "command": "ifc-graph-viewer.openViewer",
+	  "when": "resourceExtname == .ifc",
+	  "group": "navigation"
+	}
+      ],
+      "editor/context": [
+        {
+	  "command": "ifc-graph-viewer.openViewer",
+	  "when": "resourceExtname == .ifc",
+	  "group": "navigation"
+	}
+      ]
+    }
   },
   "scripts": {
     "install:all": "npm install && cd webview-ui && npm install",
