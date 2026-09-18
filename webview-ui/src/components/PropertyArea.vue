@@ -32,7 +32,7 @@ const stringifyContent = (content: AttrContent | AttrContent[]) => {
 </script>
 
 <template>
-  <div>
+  <div class="property-area">
     <h3>Node Details</h3>
     <p><strong>ID:</strong> {{ node.id }}</p>
     <p><strong>Type:</strong> {{ node.type }}</p>
@@ -56,6 +56,11 @@ const stringifyContent = (content: AttrContent | AttrContent[]) => {
 </template>
 
 <style>
+
+.property-area {
+  color: #333;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
