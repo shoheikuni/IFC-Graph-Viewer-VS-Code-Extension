@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import Canvas from "./components/Canvas.vue";
-import { onMounted, onUnmounted, useTemplateRef } from 'vue';
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { initProcessIfc, deinitProcessIfc, processIfcInitialized } from "./components/processIfc_webIfc"
 
 const canvas = useTemplateRef('canvas');
-let unloadedText: string = "";
+let unloadedData: { ifcText: string, fileName: string } | undefined;
+const fileName = ref<string>("");
 
 onMounted(async () => {
   // IFC受信
@@ -12,10 +13,11 @@ onMounted(async () => {
     if (event.data?.type === "loadIfc") {
       console.log("[App] IFC received");
       if (processIfcInitialized()) {
-        canvas.value!.loadIfcFromText(event.data.data);
+	fileName.value = event.data.data.fileName;
+        canvas.value!.loadIfcFromText(event.data.data.ifcText);
       }
       else {
-        unloadedText = event.data.data; // processIfc_webIfcの初期化後まで保持する
+        unloadedData = event.data.data; // processIfc_webIfcの初期化後まで保持する
       }
     }
   });
@@ -25,9 +27,10 @@ onMounted(async () => {
   await initProcessIfc(wasmDir);
 
   // 受信済みのIFCテキストを読み込み
-  if (unloadedText !== "") {
-    canvas.value!.loadIfcFromText(unloadedText);
-    unloadedText = "";
+  if (unloadedData) {
+    fileName.value = unloadedData.fileName;
+    canvas.value!.loadIfcFromText(unloadedData.ifcText);
+    unloadedData = undefined;
   }
 
 });
@@ -37,7 +40,25 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Canvas ref="canvas" />
+  <div class="viewer-root">
+    <div class="header">{{ fileName }}</div>
+    <Canvas ref="canvas" />
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+
+/* 表示位置調整がうまくいかないので無効化中
+.header {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  background-color: #f3f3f3;
+  border-bottom: 1px solid #ddd;
+  color: #333;
+}
+*/
+
+</style>

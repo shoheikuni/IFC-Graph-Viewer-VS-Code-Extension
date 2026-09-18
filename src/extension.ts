@@ -6,6 +6,7 @@ export function activate(context: ExtensionContext) {
     async (uri?: Uri) => {
 
       let ifcText: string | undefined;
+      let fileName: string | undefined;
 
       // エクスプローラ右クリック（ファイルuriが渡される）
       if (uri) {
@@ -15,6 +16,7 @@ export function activate(context: ExtensionContext) {
         }
         const bytes = await workspace.fs.readFile(uri);
         ifcText = bytes.toString();
+        fileName = uri.path.split("/").pop()!;
       }
       // コマンドパレットまたはエディタ右クリック
       else {
@@ -31,10 +33,11 @@ export function activate(context: ExtensionContext) {
         }
 
         ifcText = document.getText();
+        fileName = document.fileName.split(/[\\/]/).pop()!;
       }
 
       // Webview 起動
-      HelloWorldPanel.render(context.extensionUri, ifcText);
+      HelloWorldPanel.render(context.extensionUri, ifcText, fileName);
     });
 
   // Add command to the extension context
