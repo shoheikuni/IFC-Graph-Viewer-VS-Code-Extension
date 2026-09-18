@@ -70,7 +70,7 @@ export class HelloWorldPanel {
       // IFCデータをWebviewに送る
       panel.webview.postMessage({
         type: "loadIfc",
-	data: ifcText,
+        data: ifcText,
       });
 
     }
