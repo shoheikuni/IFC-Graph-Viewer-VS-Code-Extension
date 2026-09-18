@@ -1,5 +1,5 @@
 import { commands, ExtensionContext, window, Uri, workspace } from "vscode";
-import { HelloWorldPanel } from "./panels/HelloWorldPanel";
+import { IfcGraphViewerPanel } from "./panels/IfcGraphViewerPanel";
 
 export function activate(context: ExtensionContext) {
   const openViewerCommand = commands.registerCommand("ifc-graph-viewer.openViewer",
@@ -37,7 +37,7 @@ export function activate(context: ExtensionContext) {
       }
 
       // Webview 起動
-      HelloWorldPanel.render(context.extensionUri, ifcText, fileName);
+      IfcGraphViewerPanel.render(context.extensionUri, ifcText, fileName);
     });
 
   // Add command to the extension context
