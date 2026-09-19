@@ -28,15 +28,15 @@ export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: st
 
   const ifcProjectId = entities["IfcProject"][0];
 
-  return [getIfcNode(ifcProjectId), entities];
+  return [createIfcNode(ifcProjectId), entities];
 }
 
 export async function addNode_impl(id: number): Promise<IfcNode> {
-  return getIfcNode(id);
+  return createIfcNode(id);
 }
 
 export async function addNodeById_impl(id: number): Promise<IfcNode> {
-  return getIfcNode(id);
+  return createIfcNode(id);
 }
 
 function refersToAnotherId(lineObjectValue: any): boolean {
@@ -103,7 +103,7 @@ function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse
   };
 }
 
-function getIfcNode(id: number): IfcNode {
+function createIfcNode(id: number): IfcNode {
   const lineObject = ifcapi.GetLine(modelID, id, false, false);
   const lineObjectWithInverses = ifcapi.GetLine(modelID, id, false, true);
 
