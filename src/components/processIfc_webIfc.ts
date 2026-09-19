@@ -123,6 +123,7 @@ function createIfcNode(id: number): IfcNode {
 
   const node: IfcNode = {
     id: lineObject.expressID,
+    reference: null,
     type: ifcapi.GetNameFromTypeCode(lineObject.type),
     attributes: [],
     position: { x: 40, y: 60 },
@@ -137,6 +138,11 @@ function createIfcNode(id: number): IfcNode {
     hasValue(attribute.content) && count++;
     node.attributes.push(attribute);
   }
+
+  // TODO: 参照(逆属性ではない参照)の取得
+  // webIfcには、すべての参照関係を取得する機能はない。
+  // 全エンティティを走査して逆引き辞書を自前で作るしかない。
+  node.reference = null;
 
   return node;
 }
