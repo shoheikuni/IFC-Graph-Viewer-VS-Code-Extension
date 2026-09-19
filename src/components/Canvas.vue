@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 
 import NodeComponent from "./NodeComponent.vue";
 import EdgeComponent from "./EdgeComponent.vue";
-import { IfcNode, Edge, Position, Attribute, AttrContent } from "./interfaces";
+import { IfcNode, Edge, Position, Attribute } from "./interfaces";
 import { hasValue } from "./utils";
 import PropertyArea from "./PropertyArea.vue";
 import SearchEntity from "./SearchEntity.vue";
@@ -48,8 +48,8 @@ const rectSelecting = ref(false);
 // 右クリック位置
 const rightClickPosition = ref({ x: 0, y: 0 });
 
-const filename= ref<string>("");
 const fileInput = ref<HTMLInputElement | null>(null);
+const viewFilename = ref<string>("");
 
 // 描画領域の拡大縮小、移動
 const scale = ref(1);
@@ -170,12 +170,13 @@ function endDrag() {
 }
 
 const loadFile = async (file: File) => {
+  viewFilename.value = file.name;
+
   try {
     const [model, entities] = await loadFile_impl(file);
 
     ifcElements.value = entities;
     nodes.value.push(model);
-    filename.value = file.name;
     console.log(model);
   }
   catch(error) {
@@ -511,7 +512,7 @@ const closeSearch = () => {
     @dragover.prevent
     @drop="handleDrop"
     @click="triggerFileInput"
-    v-if="filename === ''"
+    v-if="viewFilename === ''"
   >
     Drag & Drop or Click
     <input
@@ -522,7 +523,7 @@ const closeSearch = () => {
     />
   </div>
   <h4 v-else class="fileInput" style="margin-top: 0">
-    {{ filename }}
+    {{ viewFilename }}
   </h4>
 
   <div class="container">
