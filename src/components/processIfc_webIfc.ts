@@ -45,7 +45,7 @@ function refersToAnotherId(lineObjectValue: any): boolean {
   return lineObjectValue.type == WebIFC.REF;
 }
 
-function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse: boolean, attrIdx: number): Attribute {
+function makeAttribute(attrName: string, lineObjectValue: any, isInverse: boolean, attrIdx: number): Attribute {
   const omittedId = 0; // #0 is the id for the omitted parameter "*"
 
   let content: AttrContent | AttrContent[];
@@ -82,35 +82,44 @@ function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse
     }
   }
   else if (refersToAnotherId(lineObjectValue)) {
-    console.assert(!keyIsInverse);
+    console.assert(!isInverse);
     content = { type: "id", value: extractId(lineObjectValue) };
   }
   else if (lineObjectValue == null) {
-    console.assert(!keyIsInverse);
+    console.assert(!isInverse);
     content = { type: "value", value: null };
   }
   else {
-    console.assert(!keyIsInverse);
+    console.assert(!isInverse);
     console.log(lineObjectValue.name); // IFCクラス名。使わない。
     content = { type: "value", value: extractValue(lineObjectValue) };
   }
 
   return {
-    name: lineObjectKey,
+    name: attrName,
     content: content,
-    edgePosition: { x: keyIsInverse ? 0 : 200, y: 68 + attrIdx * 29 },
-    inverse: keyIsInverse,
+    edgePosition: { x: isInverse ? 0 : 200, y: 68 + attrIdx * 29 },
+    inverse: isInverse,
   };
 }
 
 function createIfcNode(id: number): IfcNode {
+  // lineObjectはid(Express ID)の行に対応するIFCオブジェクト。
+  // keyはexpressID, type, 及びIFC属性名
+  // {
+  //   expressID: id値,
+  //   type: IFCクラスに対応する内部の型コード番号,
+  //   GlobalId: { type: 1, value: "1s5utE$rDDfRKgzV6jUJ3d" },
+  //   以下、IFC属性が続く...
+  // }
   const lineObject = ifcapi.GetLine(modelID, id, false, false);
   const lineObjectWithInverses = ifcapi.GetLine(modelID, id, false, true);
 
-  const keys = new Set(Object.keys(lineObject));
-  const keysWithInverses = Object.keys(lineObjectWithInverses);
+  const keysExcludingInverses = new Set(Object.keys(lineObject)); // expressID, type, or 属性名. 逆参照名含まず
+  const keysIncludingInverses = Object.keys(lineObjectWithInverses); // expressID, type, or 属性名. 逆参照名含む
 
-  const inverseKeys = new Set(keysWithInverses.filter(key => !keys.has(key)));
+  const attrNamesIncludingInverses = keysIncludingInverses.filter(key => key !== "expressID" && key !== "type"); // 属性名（逆参照名含む）
+  const inverseNames = new Set(keysIncludingInverses.filter(key => !keysExcludingInverses.has(key))); // 逆参照名
 
   const node: IfcNode = {
     id: lineObject.expressID,
@@ -120,13 +129,11 @@ function createIfcNode(id: number): IfcNode {
   };
 
   let count = 0;
-  for (const key of keysWithInverses) {
-    if (key == "expressID" || key == "type") continue;
+  for (const attrName of attrNamesIncludingInverses) {
+    const value = lineObjectWithInverses[attrName];
+    const isInverse = inverseNames.has(attrName);
 
-    const value = lineObjectWithInverses[key];
-    const keyIsInverse = inverseKeys.has(key);
-
-    const attribute = makeAttribute(key, value, keyIsInverse, count);
+    const attribute = makeAttribute(attrName, value, isInverse, count);
     hasValue(attribute.content) && count++;
     node.attributes.push(attribute);
   }
