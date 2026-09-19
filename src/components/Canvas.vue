@@ -48,7 +48,7 @@ const rectSelecting = ref(false);
 // 右クリック位置
 const rightClickPosition = ref({ x: 0, y: 0 });
 
-const fileOpen = ref<Boolean>(false);
+const filename= ref<string>("");
 const fileInput = ref<HTMLInputElement | null>(null);
 
 // 描画領域の拡大縮小、移動
@@ -175,7 +175,7 @@ const loadFile = async (file: File) => {
 
     ifcElements.value = entities;
     nodes.value.push(model);
-    fileOpen.value = true;
+    filename.value = file.name;
     console.log(model);
   }
   catch(error) {
@@ -511,7 +511,7 @@ const closeSearch = () => {
     @dragover.prevent
     @drop="handleDrop"
     @click="triggerFileInput"
-    v-if="!fileOpen"
+    v-if="filename === ''"
   >
     Drag & Drop or Click
     <input
@@ -521,6 +521,9 @@ const closeSearch = () => {
       class="hidden-input"
     />
   </div>
+  <h4 v-else class="fileInput" style="margin-top: 0">
+    {{ filename }}
+  </h4>
 
   <div class="container">
     <div
