@@ -13,7 +13,7 @@ export interface Attribute {
   edgePosition: Position; // エッジの接続位置
 }
 
-export type AttrContentValueType = string | number | Array<number> | null;
+export type AttrContentValueType = string | number | number[] | null;
 export type AttrContentIdType = number | null;
 
 export interface AttrContent {

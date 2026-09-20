@@ -48,13 +48,13 @@ function refersToAnotherId(lineObjectValue: any): boolean {
 function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse: boolean, attrIdx: number): Attribute {
   const omittedId = 0; // #0 is the id for the omitted parameter "*"
 
-  let content: AttrContent | Array<AttrContent>;
+  let content: AttrContent | AttrContent[];
 
   const extractId = (obj: any): AttrContentIdType => { return obj.value == omittedId ? null : obj.value; };
   const extractValue = (obj: any): AttrContentValueType => {
     if (Array.isArray(obj)) {
       if (obj[0].type === WebIFC.REAL) { // ifじゃなくてassertであるべき？
-        const values: Array<number> = obj.map(elem => elem.value);
+        const values: number[] = obj.map(elem => elem.value);
         return values;
       }
     }
