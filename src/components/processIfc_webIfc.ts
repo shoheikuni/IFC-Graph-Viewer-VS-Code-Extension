@@ -52,7 +52,7 @@ function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse
 
   const extractId = (obj: any): AttrContentIdType => { return obj.value == omittedId ? null : obj.value; };
   const extractValue = (obj: any): AttrContentValueType => {
-    if (obj instanceof Array) {
+    if (Array.isArray(obj)) {
       if (obj[0].type === WebIFC.REAL) { // ifじゃなくてassertであるべき？
         const values: Array<number> = obj.map(elem => elem.value);
         return values;
@@ -61,7 +61,7 @@ function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse
     return obj.value;
   };
 
-  if (lineObjectValue instanceof Array) {
+  if (Array.isArray(lineObjectValue)) {
     if (lineObjectValue.length == 0) {
       content = [];
     }
