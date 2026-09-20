@@ -1,5 +1,5 @@
 import * as WebIFC from "web-ifc"
-import { Attribute, AttrContent, AttrContentValueType, AttrContentIdType, IfcNode } from "./interfaces";
+import { Attribute, AttrContent, IfcNode } from "./interfaces";
 import { hasValue } from "./utils";
 
 
@@ -39,65 +39,188 @@ export async function addNodeById_impl(id: number): Promise<IfcNode> {
   return createIfcNode(id);
 }
 
-function refersToAnotherId(lineObjectValue: any): boolean {
-  if (!lineObjectValue) return false;
-  if (lineObjectValue instanceof WebIFC.Handle) return true;
-  return lineObjectValue.type == WebIFC.REF;
+type IfcValueClass = {
+  type: number,
+  value: any,
+};
+
+type Reference = {
+  type: number,
+  value: number,
+};
+
+type HandleLike = Reference | WebIFC.IfcLineObject;
+
+function isObject(x: unknown): x is object {
+  return x !== null && (typeof x === 'object' || typeof x === 'function');
 }
 
-function makeAttribute(attrName: string, lineObjectValue: any, isInverse: boolean, attrIdx: number): Attribute {
+function isReference(x: unknown): x is Reference {
+  return isObject(x) && "type" in x && "value" in x &&
+         typeof x.type === "number" && typeof x.value === "number" &&
+         (x.type === WebIFC.REF || x instanceof WebIFC.Handle);
+}
+
+function isIfcValueClass(x: unknown): x is IfcValueClass {
+  return isObject(x) && "type" in x && "value" in x && !isReference(x);
+}
+
+function isIfcLineObject(x: unknown): x is WebIFC.IfcLineObject {
+  return x instanceof WebIFC.IfcLineObject;
+}
+
+function isHandleLike(x: unknown): x is HandleLike {
+  return isReference(x) || isIfcLineObject(x);
+}
+
+function isEmptyArray(x: unknown): boolean {
+  return Array.isArray(x) && x.length === 0;
+}
+
+function isIfcValueClassArray(x: unknown): x is IfcValueClass[] {
+  return Array.isArray(x) &&  x.every(item => isIfcValueClass(item));
+}
+
+function isHandleLikeArray(x: unknown): x is (HandleLike)[] {
+  return Array.isArray(x) &&  x.every(item => isHandleLike(item));
+}
+
+function isNumberArray(x: unknown): x is number[] {
+  return Array.isArray(x) && x.every(item => typeof item === 'number');
+}
+
+function isArrayOfEmptyArray(x: unknown): boolean {
+  return Array.isArray(x) && x.length > 0 && x.every(item => isEmptyArray(item));
+}
+
+function isArrayOfIfcValueClassArray(x: unknown): x is IfcValueClass[][] {
+  return Array.isArray(x) && x.length > 0 && x.filter(item => !isEmptyArray(item)).every(item => isIfcValueClassArray(item));
+}
+
+function isArrayOfHandleLikeArray(x: unknown): x is (HandleLike)[][] {
+  return Array.isArray(x) && x.length > 0 && x.filter(item => !isEmptyArray(item)).every(item => isHandleLikeArray(item));
+}
+
+function getId(obj: HandleLike): number | null {
   const omittedId = 0; // #0 is the id for the omitted parameter "*"
 
-  let content: AttrContent | AttrContent[];
-
-  const extractId = (obj: any): AttrContentIdType => { return obj.value == omittedId ? null : obj.value; };
-  const extractValue = (obj: any): AttrContentValueType => {
-    if (Array.isArray(obj)) {
-      if (obj[0].type === WebIFC.REAL) { // ifじゃなくてassertであるべき？
-        const values: number[] = obj.map(elem => elem.value);
-        return values;
-      }
-    }
-    return obj.value;
-  };
-
-  if (Array.isArray(lineObjectValue)) {
-    if (lineObjectValue.length == 0) {
-      content = [];
-    }
-    else if (lineObjectValue[0].type === WebIFC.REAL) {
-      // 座標
-      content = { type: "value", value: extractValue(lineObjectValue) };
-    }
-    else {
-      // リスト
-      content = lineObjectValue.map(elem => {
-        if (refersToAnotherId(elem)) { // IDリスト
-          return { type: "id", value: extractId(elem) };
-        }
-        else { // テキストリスト or 座標リスト
-          return { type: "value", value: extractValue(elem) };
-        }
-      }).filter(content => !!content); // このフィルタ意味ある？
-    }
-  }
-  else if (refersToAnotherId(lineObjectValue)) {
-    console.assert(!isInverse);
-    content = { type: "id", value: extractId(lineObjectValue) };
-  }
-  else if (lineObjectValue == null) {
-    console.assert(!isInverse);
-    content = { type: "value", value: null };
+  if (isReference(obj)) {
+    return obj.value == omittedId ? null : obj.value;
   }
   else {
+    return obj.expressID;
+  }
+}
+
+function asNumbers(arr: IfcValueClass[]): number[] | undefined {
+  if (arr.every(item => item.type === WebIFC.REAL || item.type === WebIFC.INTEGER)) {
+    return arr.map(item => item.value as number);
+  }
+  return undefined;
+}
+function asTexts(arr: IfcValueClass[]): string[] | undefined {
+  if (arr.every(item => item.type === WebIFC.STRING)) {
+    return arr.map(item => item.value as string);
+  }
+  return undefined;
+}
+
+
+type AttrValueType =
+  Reference | WebIFC.IfcLineObject | IfcValueClass | number |
+  HandleLike[] | IfcValueClass[] | number[] |
+  HandleLike[][] | IfcValueClass[][] |
+  null;
+
+
+function makeAttrContent(attrValue: AttrValueType, isInverse: boolean)
+: AttrContent | AttrContent[] {
+  let result: AttrContent | AttrContent[];
+
+  if (attrValue === null) {
     console.assert(!isInverse);
-    console.log(lineObjectValue.name); // IFCクラス名。使わない。
-    content = { type: "value", value: extractValue(lineObjectValue) };
+    result = { type: "value", value: null };
+  }
+  else if (isReference(attrValue)) {
+    console.assert(!isInverse); // 逆参照なら必ずリストになるので。
+    result = { type: "id", value: getId(attrValue) };
+  }
+  else if (isIfcLineObject(attrValue)) {
+    console.assert(!isInverse); // 逆参照なら必ずリストになるので。
+    result = { type: "id", value: getId(attrValue) };
+  }
+  else if (isIfcValueClass(attrValue)) {
+    result = { type: "value", value: attrValue.value };
+  }
+  else if (typeof attrValue === "number") {
+    result = { type: "value", value: attrValue };
+  }
+  else if (typeof attrValue === "string" && !Number.isNaN(Number(attrValue))) {
+    // WebIFCのクラス定義を見ると数値はnumber型でしか格納されないはずなんだけど
+    // なぜかstring型の場合があるのでその場合に対処する
+    result = { type: "value", value: Number(attrValue) };
+  }
+  else if (isEmptyArray(attrValue)) {
+    result = [];
+  }
+  else if (isHandleLikeArray(attrValue)) {
+    result = attrValue.map(item => {
+      return { type: "id", value: getId(item) };
+    });
+  }
+  else if (isIfcValueClassArray(attrValue)) {
+    let numbers: number[] | undefined;
+    let texts: string[] | undefined;
+    if (numbers = asNumbers(attrValue)) {
+      result = { type: "value", value: numbers };
+    }
+    else if (texts = asTexts(attrValue)) {
+      result = texts.map(text => { return { type: "value", value: text }; });
+    }
+    else {
+      console.assert(false);
+      result = []; // dummy
+    }
+  }
+  else if (isNumberArray(attrValue)) {
+    result = { type: "value", value: attrValue };
+  }
+  else if (isArrayOfEmptyArray(attrValue)) {
+    result = attrValue.map(arr => {
+      console.assert(arr.length === 0);
+      return { type: "value", value: [] }
+    });
+  }
+  else if (isArrayOfHandleLikeArray(attrValue)) {
+    result = attrValue.map(arr => {
+      const ids = arr.map(item => getId(item)).filter(item => item !== null);
+      return { type: "id", value: ids }
+    });
+  }
+  else if (isArrayOfIfcValueClassArray(attrValue)) {
+    result = attrValue.map(arr => {
+      let numbers: number[] | undefined;
+      if (numbers = asNumbers(arr)) {
+        return { type: "value", value: numbers };
+      }
+      else {
+        console.assert(false);
+        return { type: "value", value: null }; // dummy
+      }
+    });
+  }
+  else {
+    console.assert(false);
+    result = []; // dummy
   }
 
+  return result;
+}
+
+function makeAttribute(attrName: string, attrValue: AttrValueType, isInverse: boolean, attrIdx: number): Attribute {
   return {
     name: attrName,
-    content: content,
+    content: makeAttrContent(attrValue, isInverse),
     edgePosition: { x: isInverse ? 0 : 200, y: 68 + attrIdx * 29 },
     inverse: isInverse,
   };
@@ -130,10 +253,10 @@ function createIfcNode(id: number): IfcNode {
 
   let count = 0;
   for (const attrName of attrNamesIncludingInverses) {
-    const value = lineObjectWithInverses[attrName];
+    const attrValue = lineObjectWithInverses[attrName];
     const isInverse = inverseNames.has(attrName);
 
-    const attribute = makeAttribute(attrName, value, isInverse, count);
+    const attribute = makeAttribute(attrName, attrValue, isInverse, count);
     hasValue(attribute.content) && count++;
     node.attributes.push(attribute);
   }
