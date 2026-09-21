@@ -1,4 +1,5 @@
 import * as WebIFC from "web-ifc"
+import { IfcValueClass, Reference, HandleLike, isIfcValueClass, isHandleLike, isReference, isIfcLineObject } from "./WebIFC_helper"
 import { Attribute, AttrContent, IfcNode } from "./interfaces";
 import { hasValue } from "./utils";
 
@@ -39,39 +40,6 @@ export async function addNodeById_impl(id: number): Promise<IfcNode> {
   return createIfcNode(id);
 }
 
-type IfcValueClass = {
-  type: number,
-  value: any,
-};
-
-type Reference = {
-  type: number,
-  value: number,
-};
-
-type HandleLike = Reference | WebIFC.IfcLineObject;
-
-function isObject(x: unknown): x is object {
-  return x !== null && (typeof x === 'object' || typeof x === 'function');
-}
-
-function isReference(x: unknown): x is Reference {
-  return isObject(x) && "type" in x && "value" in x &&
-         typeof x.type === "number" && typeof x.value === "number" &&
-         (x.type === WebIFC.REF || x instanceof WebIFC.Handle);
-}
-
-function isIfcValueClass(x: unknown): x is IfcValueClass {
-  return isObject(x) && "type" in x && "value" in x && !isReference(x);
-}
-
-function isIfcLineObject(x: unknown): x is WebIFC.IfcLineObject {
-  return x instanceof WebIFC.IfcLineObject;
-}
-
-function isHandleLike(x: unknown): x is HandleLike {
-  return isReference(x) || isIfcLineObject(x);
-}
 
 function isEmptyArray(x: unknown): boolean {
   return Array.isArray(x) && x.length === 0;
