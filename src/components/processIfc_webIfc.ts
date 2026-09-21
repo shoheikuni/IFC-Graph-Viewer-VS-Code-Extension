@@ -1,5 +1,5 @@
 import * as WebIFC from "web-ifc"
-import { IfcValueClass, Reference, HandleLike, isIfcValueClass, isHandleLike, isReference, isIfcLineObject } from "./WebIFC_helper"
+import { IfcValueClass, HandleLike, isIfcValueClass, isHandleLike, isHandle, isIfcLineObject } from "./WebIFC_helper"
 import { Attribute, AttrContent, IfcNode } from "./interfaces";
 import { hasValue } from "./utils";
 
@@ -72,7 +72,7 @@ function isArrayOfHandleLikeArray(x: unknown): x is (HandleLike)[][] {
 function getId(obj: HandleLike): number | null {
   const omittedId = 0; // #0 is the id for the omitted parameter "*"
 
-  if (isReference(obj)) {
+  if (isHandle(obj)) {
     return obj.value == omittedId ? null : obj.value;
   }
   else {
@@ -109,7 +109,7 @@ function makeAttrContent(attrValue: AttrValueType, isInverse: boolean)
     console.assert(!isInverse);
     result = { type: "value", value: null };
   }
-  else if (isReference(attrValue)) {
+  else if (isHandle(attrValue)) {
     console.assert(!isInverse); // 逆参照なら必ずリストになるので。
     result = { type: "id", value: getId(attrValue) };
   }

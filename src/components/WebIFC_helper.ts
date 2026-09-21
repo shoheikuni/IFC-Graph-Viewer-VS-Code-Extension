@@ -6,23 +6,35 @@ export type IfcValueClass = {
   value: any,
 };
 
-export type Reference = {
-  type: number,
-  value: number,
-};
+export interface HandleInterface {
+  type: number;
+  value: number;
+}
 
-export type HandleLike = Reference | WebIFC.IfcLineObjectInterface;
+export type HandleLike = HandleInterface | WebIFC.IfcLineObjectInterface;
 
-export function isReference(x: unknown): x is Reference {
-  return (x instanceof WebIFC.Handle) ||
-         (isObject(x) && "type" in x && "value" in x &&
-          typeof x.type === "number" && typeof x.value === "number" &&
-          x.type === WebIFC.REF);
+function isTrueHandle(x: unknown): x is WebIFC.Handle<any> {
+    return x instanceof WebIFC.Handle;
+}
+
+// WebIFC.HandleインスタンスではないがtypeがWebIFC.REFであるオブジェクト
+function isStructuredHandle(x: unknown): boolean {
+    return !isTrueHandle(x) &&
+           isObject(x) && "type" in x && "value" in x &&
+           typeof x.type === "number" && typeof x.value === "number" &&
+           x.type === WebIFC.REF;
+}
+
+export function isHandle(x: unknown): x is HandleInterface {
+    // 単なるTrueHandle判定(`instanceof WebIFC.Handle`の判定)では不十分。
+    // "IsDecomposedBy"のような逆属性の値として、TrueHandleではなくてStructuredHandleが格納される場合があるため。
+    // (逆属性なら必ずStructuredHandleかどうかまでは調査していない)
+    return isTrueHandle(x) || isStructuredHandle(x);
 }
 
 export function isIfcValueClass(x: unknown): x is IfcValueClass {
   return isObject(x) && "type" in x && "value" in x &&
-         typeof x.type === "number" && !isReference(x);
+         typeof x.type === "number" && !isHandle(x);
 }
 
 function isTrueIfcLineObject(x: unknown): x is WebIFC.IfcLineObject {
@@ -40,5 +52,5 @@ export function isIfcLineObject(x: unknown): x is WebIFC.IfcLineObjectInterface 
 }
 
 export function isHandleLike(x: unknown): x is HandleLike {
-  return isReference(x) || isIfcLineObject(x);
+  return isHandle(x) || isIfcLineObject(x);
 }
