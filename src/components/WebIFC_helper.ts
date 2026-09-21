@@ -11,7 +11,7 @@ export type Reference = {
   value: number,
 };
 
-export type HandleLike = Reference | WebIFC.IfcLineObject;
+export type HandleLike = Reference | WebIFC.IfcLineObjectInterface;
 
 export function isReference(x: unknown): x is Reference {
   return (x instanceof WebIFC.Handle) ||
@@ -25,8 +25,18 @@ export function isIfcValueClass(x: unknown): x is IfcValueClass {
          typeof x.type === "number" && !isReference(x);
 }
 
-export function isIfcLineObject(x: unknown): x is IfcLineObject {
-  return x instanceof WebIFC.IfcLineObject;
+function isTrueIfcLineObject(x: unknown): x is WebIFC.IfcLineObject {
+    return x instanceof WebIFC.IfcLineObject;
+}
+
+function isStructuredIfcLineObject(x: unknown): boolean {
+  return !isTrueIfcLineObject(x) &&
+         isObject(x) && "type" in x && "expressID" in x &&
+         typeof x.type === "number" && typeof x.expressID === "number";
+}
+
+export function isIfcLineObject(x: unknown): x is WebIFC.IfcLineObjectInterface {
+    return isTrueIfcLineObject(x) || isStructuredIfcLineObject(x);
 }
 
 export function isHandleLike(x: unknown): x is HandleLike {

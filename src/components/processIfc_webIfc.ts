@@ -95,7 +95,7 @@ function asTexts(arr: IfcValueClass[]): string[] | undefined {
 
 
 type AttrValueType =
-  Reference | WebIFC.IfcLineObject | IfcValueClass | number |
+  HandleLike | IfcValueClass | number |
   HandleLike[] | IfcValueClass[] | number[] |
   HandleLike[][] | IfcValueClass[][] |
   null;
