@@ -14,13 +14,15 @@ export type Reference = {
 export type HandleLike = Reference | WebIFC.IfcLineObject;
 
 export function isReference(x: unknown): x is Reference {
-  return isObject(x) && "type" in x && "value" in x &&
-         typeof x.type === "number" && typeof x.value === "number" &&
-         (x.type === WebIFC.REF || x instanceof WebIFC.Handle);
+  return (x instanceof WebIFC.Handle) ||
+         (isObject(x) && "type" in x && "value" in x &&
+          typeof x.type === "number" && typeof x.value === "number" &&
+          x.type === WebIFC.REF);
 }
 
 export function isIfcValueClass(x: unknown): x is IfcValueClass {
-  return isObject(x) && "type" in x && "value" in x && !isReference(x);
+  return isObject(x) && "type" in x && "value" in x &&
+         typeof x.type === "number" && !isReference(x);
 }
 
 export function isIfcLineObject(x: unknown): x is IfcLineObject {
