@@ -1,10 +1,10 @@
 import * as WebIFC from "web-ifc"
 import { isObject } from "./utils";
 
-export type IfcValueClass = {
-  type: number,
-  value: any,
-};
+export interface IfcValueInterface {
+  type: number;
+  value: any;
+}
 
 export interface HandleInterface {
   type: number;
@@ -32,7 +32,7 @@ export function isHandle(x: unknown): x is HandleInterface {
     return isTrueHandle(x) || isStructuredHandle(x);
 }
 
-export function isIfcValueClass(x: unknown): x is IfcValueClass {
+export function isIfcValue(x: unknown): x is IfcValueInterface {
   return isObject(x) && "type" in x && "value" in x &&
          typeof x.type === "number" && !isHandle(x);
 }

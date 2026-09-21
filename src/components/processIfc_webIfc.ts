@@ -1,5 +1,5 @@
 import * as WebIFC from "web-ifc"
-import { IfcValueClass, HandleLike, isIfcValueClass, isHandleLike, isHandle, isIfcLineObject } from "./WebIFC_helper"
+import { IfcValueInterface, HandleLike, isIfcValue, isHandleLike, isHandle, isIfcLineObject } from "./WebIFC_helper"
 import { Attribute, AttrContent, IfcNode } from "./interfaces";
 import { hasValue } from "./utils";
 
@@ -45,8 +45,8 @@ function isEmptyArray(x: unknown): boolean {
   return Array.isArray(x) && x.length === 0;
 }
 
-function isIfcValueClassArray(x: unknown): x is IfcValueClass[] {
-  return Array.isArray(x) &&  x.every(item => isIfcValueClass(item));
+function isIfcValueArray(x: unknown): x is IfcValueInterface[] {
+  return Array.isArray(x) &&  x.every(item => isIfcValue(item));
 }
 
 function isHandleLikeArray(x: unknown): x is (HandleLike)[] {
@@ -61,8 +61,8 @@ function isArrayOfEmptyArray(x: unknown): boolean {
   return Array.isArray(x) && x.length > 0 && x.every(item => isEmptyArray(item));
 }
 
-function isArrayOfIfcValueClassArray(x: unknown): x is IfcValueClass[][] {
-  return Array.isArray(x) && x.length > 0 && x.filter(item => !isEmptyArray(item)).every(item => isIfcValueClassArray(item));
+function isArrayOfIfcValueArray(x: unknown): x is IfcValueInterface[][] {
+  return Array.isArray(x) && x.length > 0 && x.filter(item => !isEmptyArray(item)).every(item => isIfcValueArray(item));
 }
 
 function isArrayOfHandleLikeArray(x: unknown): x is (HandleLike)[][] {
@@ -80,13 +80,13 @@ function getId(obj: HandleLike): number | null {
   }
 }
 
-function asNumbers(arr: IfcValueClass[]): number[] | undefined {
+function asNumbers(arr: IfcValueInterface[]): number[] | undefined {
   if (arr.every(item => item.type === WebIFC.REAL || item.type === WebIFC.INTEGER)) {
     return arr.map(item => item.value as number);
   }
   return undefined;
 }
-function asTexts(arr: IfcValueClass[]): string[] | undefined {
+function asTexts(arr: IfcValueInterface[]): string[] | undefined {
   if (arr.every(item => item.type === WebIFC.STRING)) {
     return arr.map(item => item.value as string);
   }
@@ -95,9 +95,9 @@ function asTexts(arr: IfcValueClass[]): string[] | undefined {
 
 
 type AttrValueType =
-  HandleLike | IfcValueClass | number |
-  HandleLike[] | IfcValueClass[] | number[] |
-  HandleLike[][] | IfcValueClass[][] |
+  HandleLike | IfcValueInterface | number |
+  HandleLike[] | IfcValueInterface[] | number[] |
+  HandleLike[][] | IfcValueInterface[][] |
   null;
 
 
@@ -117,7 +117,7 @@ function makeAttrContent(attrValue: AttrValueType, isInverse: boolean)
     console.assert(!isInverse); // 逆参照なら必ずリストになるので。
     result = { type: "id", value: getId(attrValue) };
   }
-  else if (isIfcValueClass(attrValue)) {
+  else if (isIfcValue(attrValue)) {
     result = { type: "value", value: attrValue.value };
   }
   else if (typeof attrValue === "number") {
@@ -136,7 +136,7 @@ function makeAttrContent(attrValue: AttrValueType, isInverse: boolean)
       return { type: "id", value: getId(item) };
     });
   }
-  else if (isIfcValueClassArray(attrValue)) {
+  else if (isIfcValueArray(attrValue)) {
     let numbers: number[] | undefined;
     let texts: string[] | undefined;
     if (numbers = asNumbers(attrValue)) {
@@ -165,7 +165,7 @@ function makeAttrContent(attrValue: AttrValueType, isInverse: boolean)
       return { type: "id", value: ids }
     });
   }
-  else if (isArrayOfIfcValueClassArray(attrValue)) {
+  else if (isArrayOfIfcValueArray(attrValue)) {
     result = attrValue.map(arr => {
       let numbers: number[] | undefined;
       if (numbers = asNumbers(arr)) {
