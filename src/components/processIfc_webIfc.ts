@@ -15,10 +15,7 @@ const settings = {
   COORDINATE_TO_ORIGIN: true
 };
 
-export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {
-  const rawFileData = await ifcFile.arrayBuffer();
-  modelID = ifcapi.OpenModel(new Uint8Array(rawFileData), settings); // いつ、どうやって閉じるの？
-
+function getEntities(): { [key: string]: number[] } {
   let entities: { [key: string]: number[] } = {};
   for (const expressID of ifcapi.GetAllLines(modelID)) {
     const lineEntity = ifcapi.GetLine(modelID, expressID);
@@ -26,7 +23,14 @@ export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: st
     if (!entities[ifcClassName]) entities[ifcClassName] = [];
     entities[ifcClassName].push(expressID);
   }
+  return entities;
+}
 
+export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {
+  const rawFileData = await ifcFile.arrayBuffer();
+  modelID = ifcapi.OpenModel(new Uint8Array(rawFileData), settings); // いつ、どうやって閉じるの？
+
+  const entities = getEntities();
   const ifcProjectId = entities["IfcProject"][0];
 
   return [createIfcNode(ifcProjectId), entities];
