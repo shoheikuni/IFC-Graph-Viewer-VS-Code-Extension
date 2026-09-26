@@ -13,12 +13,13 @@ export interface Attribute {
   edgePosition: Position; // エッジの接続位置
 }
 
-export type AttrContentValueType = string | number | Array<number> | null;
-export type AttrContentIdType = number | null;
+export type AttrContentType = "value" | "id";
+export type AttrContentValueType = string | number | number[];
+export type AttrContentIdType = number | number[];
 
 export interface AttrContent {
-  type: string; // "value" or "id"
-  value: AttrContentValueType | AttrContentIdType;
+  type: AttrContentType;
+  value: AttrContentValueType | AttrContentIdType | null;
 }
 
 // attrName = undefined はノードの左上に接続されているとき
