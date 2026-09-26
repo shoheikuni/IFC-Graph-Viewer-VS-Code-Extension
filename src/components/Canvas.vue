@@ -57,13 +57,54 @@ const scale = ref(1);
 const position = ref({ x: 0, y: 0 });
 const zoomContainer = ref<HTMLElement | null>(null);
 
+// ドラッグオーバー時のハイライト表示用
+const isDraggingOver = ref(false);
+
+// サイドバーの幅（px）
+const sidebarWidth = ref(window.innerWidth * 0.25); // 初期値: 25vw
+const isResizingSidebar = ref(false);
+const minSidebarWidth = 200;
+const maxSidebarRatio = 0.75;
+
+// .canvas の幅もサイドバーの幅に合わせて可変にする
+const canvasWidth = computed(() => {
+  return `calc(100vw - ${sidebarWidth.value}px)`;
+});
+
+function onSidebarHandleMouseDown(e: MouseEvent) {
+  e.stopPropagation();
+  e.preventDefault();
+  isResizingSidebar.value = true;
+  document.body.style.cursor = "ew-resize";
+}
+
+function onSidebarHandleMouseMove(e: MouseEvent) {
+  if (!isResizingSidebar.value) return;
+  const newWidth = window.innerWidth - e.clientX;
+  sidebarWidth.value = Math.min(
+    Math.max(newWidth, minSidebarWidth),
+    window.innerWidth * maxSidebarRatio
+  );
+}
+
+function onSidebarHandleMouseUp() {
+  if (isResizingSidebar.value) {
+    isResizingSidebar.value = false;
+    document.body.style.cursor = "auto";
+  }
+}
+
 // ライフサイクルフック
 onMounted(() => {
   window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("mousemove", onSidebarHandleMouseMove);
+  window.addEventListener("mouseup", onSidebarHandleMouseUp);
 });
 
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeyDown);
+  window.removeEventListener("mousemove", onSidebarHandleMouseMove);
+  window.removeEventListener("mouseup", onSidebarHandleMouseUp);
 });
 
 // キーボードイベントのハンドラ
@@ -170,7 +211,34 @@ function endDrag() {
   document.body.style.userSelect = "auto";
 }
 
+function clearCanvas() {
+  nodes.value = [];
+  edges.value = [];
+  viewFilename.value = "";
+  fileInput.value = null;
+
+  isLoading.value = false;
+  showSearch.value = false;
+  viewedAttrNode.value = null;
+  ifcElements.value = {};
+
+  selectedNodeIds.value = [];
+  rectSelectedNodeIds.value = [];
+  previousSelectedNodeIds.value = [];
+  dragStartNodePositions.value = {};
+  drawingEdge.value = null;
+  isDraggingOver.value = false;
+  rightClickPosition.value = { x: 0, y: 0 };
+  zoomContainer.value = null;
+  scale.value = 1;
+  position.value = { x: 0, y: 0 };
+  dragging.value = false;
+  rectSelecting.value = false;
+}
+
 const loadFile = async (file: File) => {
+  clearCanvas();
+
   viewFilename.value = file.name;
   isLoading.value = true;
 
@@ -512,6 +580,31 @@ const handleRightClick = (event: MouseEvent) => {
 const closeSearch = () => {
   showSearch.value = false;
 };
+
+// ドラッグオーバーイベントのハンドラ
+const handleDragEnter = (event: DragEvent) => {
+  if (event.dataTransfer?.types?.includes("Files")) {
+    event.stopPropagation();
+    event.preventDefault();
+    isDraggingOver.value = true;
+  }
+};
+
+const handleDragLeave = (event: DragEvent) => {
+  if (event.dataTransfer?.types?.includes("Files")) {
+    event.stopPropagation();
+    event.preventDefault();
+    isDraggingOver.value = false;
+  }
+};
+
+const handleDragOver = (event: DragEvent) => {
+  if (event.dataTransfer?.types?.includes("Files")) {
+    event.stopPropagation();
+    event.preventDefault();
+    isDraggingOver.value = true;
+  }
+};
 </script>
 
 <template>
@@ -538,9 +631,22 @@ const closeSearch = () => {
   <!-- 処理中の表示 -->
   <div :class="['loading-overlay', { active: isLoading }]">Processing...</div>
 
-  <div class="container">
+  <div
+    class="container"
+    @dragenter="handleDragEnter"
+    @dragleave="handleDragLeave"
+    @dragover="handleDragOver"
+    @drop="handleDrop"
+    :class="{ 'drag-over': isDraggingOver && viewFilename !== '' }"
+  >
+    <div
+      class="sidebar-resize-handle"
+      :style="{ right: sidebarWidth + 'px', height: '100vh' }"
+      @mousedown="onSidebarHandleMouseDown"
+    ></div>
     <div
       class="canvas"
+      :style="{ width: canvasWidth }"
       @mousedown="startDrag"
       @mousemove="drag"
       @mouseup="endDrag"
@@ -611,7 +717,7 @@ const closeSearch = () => {
     </div>
 
     <!-- 属性表示欄 -->
-    <div class="sidebar">
+    <div class="sidebar" :style="{ width: sidebarWidth + 'px' }">
       <div v-if="viewedAttrNode">
         <PropertyArea :node="viewedAttrNode" />
       </div>
@@ -691,7 +797,6 @@ const closeSearch = () => {
 }
 
 .canvas {
-  width: 75vw;
   height: 100vh;
   overflow: auto;
   position: relative;
@@ -701,17 +806,27 @@ const closeSearch = () => {
   position: absolute;
   top: 0;
   right: 0;
-  /* 1/4 of the screen width */
-  width: 25vw;
-  /* Full height of the container */
   height: 100vh;
-  /* Overlay on top of the canvas */
   z-index: 2;
-  /* 長い単語でも折り返しを行う */
   word-wrap: break-word;
-  /* 必要に応じてスクロールバーを表示 */
   overflow: auto;
   background-color: #f0f0f0;
+}
+
+.sidebar-resize-handle {
+  position: fixed;
+  top: 0;
+  width: 3px;
+  height: 100vh;
+  cursor: ew-resize;
+  background: #ccc;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+.sidebar-resize-handle:hover {
+  background: #888;
+  opacity: 0.8;
 }
 
 .node-container {
@@ -774,5 +889,18 @@ const closeSearch = () => {
   color: gray;
   font-style: italic;
   padding: 8px 0;
+}
+
+/* ドラッグオーバー時のハイライト表示 */
+.container.drag-over::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  pointer-events: none; /* マウスイベントを下層に通す */
 }
 </style>
