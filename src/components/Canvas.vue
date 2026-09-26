@@ -129,7 +129,7 @@ function drag(event: MouseEvent) {
         const right = nodePosition.x + 200;
         const top = nodePosition.y;
         const length = node.attributes.filter((attr) =>
-          hasValue(attr.content)
+          hasValue(attr.contents)
         ).length;
         // ヘッダーの高さ44px、bodyのpadding20px、属性の高さ29px
         const bottom = nodePosition.y + 44 + 20 + 29 * length;
@@ -352,12 +352,8 @@ const addNode_ = async (
 
     // nodeIdと一致するattributeのnameを取得
     const targetAttr = node.attributes.find((attr) => {
-      if (Array.isArray(attr.content)) {
-        if (attr.content.find((c) => c.type === "id" && c.value === srcId)) {
+      if (attr.contents.find((c) => c.type === "id" && c.value === srcId)) {
           return true;
-        }
-      } else {
-        return attr.content.type === "id" && attr.content.value === srcId;
       }
     });
 
@@ -415,7 +411,7 @@ const addNode = (
   data: { position: Position; attribute: Attribute }
 ) => {
   // console.log(data);
-  const id = data.attribute.content;
+  const id = data.attribute.contents;
   const ids = Array.isArray(id) ? id : [id];
   ids.forEach((id, idx) => {
     addNode_(

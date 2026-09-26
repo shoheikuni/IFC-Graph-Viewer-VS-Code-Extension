@@ -105,32 +105,32 @@ type AttrValueType =
   null;
 
 
-function makeAttrContent(attrValue: AttrValueType, isInverse: boolean)
-: AttrContent | AttrContent[] {
-  let result: AttrContent | AttrContent[];
+function makeAttrContents(attrValue: AttrValueType, isInverse: boolean)
+: AttrContent[] {
+  let result: AttrContent[];
 
   if (attrValue === null) {
     console.assert(!isInverse);
-    result = { type: "value", value: null };
+    result = [{ type: "value", value: null }];
   }
   else if (isHandle(attrValue)) {
     console.assert(!isInverse); // 逆参照なら必ずリストになるので。
-    result = { type: "id", value: getId(attrValue) };
+    result = [{ type: "id", value: getId(attrValue) }];
   }
   else if (isIfcLineObject(attrValue)) {
     console.assert(!isInverse); // 逆参照なら必ずリストになるので。
-    result = { type: "id", value: getId(attrValue) };
+    result = [{ type: "id", value: getId(attrValue) }];
   }
   else if (isIfcValue(attrValue)) {
-    result = { type: "value", value: attrValue.value };
+    result = [{ type: "value", value: attrValue.value }];
   }
   else if (typeof attrValue === "number") {
-    result = { type: "value", value: attrValue };
+    result = [{ type: "value", value: attrValue }];
   }
   else if (typeof attrValue === "string" && !Number.isNaN(Number(attrValue))) {
     // WebIFCのクラス定義を見ると数値はnumber型でしか格納されないはずなんだけど
     // なぜかstring型の場合があるのでその場合に対処する
-    result = { type: "value", value: Number(attrValue) };
+    result = [{ type: "value", value: Number(attrValue) }];
   }
   else if (isEmptyArray(attrValue)) {
     result = [];
@@ -144,7 +144,7 @@ function makeAttrContent(attrValue: AttrValueType, isInverse: boolean)
     let numbers: number[] | undefined;
     let texts: string[] | undefined;
     if (numbers = asNumbers(attrValue)) {
-      result = { type: "value", value: numbers };
+      result = [{ type: "value", value: numbers }];
     }
     else if (texts = asTexts(attrValue)) {
       result = texts.map(text => { return { type: "value", value: text }; });
@@ -155,7 +155,7 @@ function makeAttrContent(attrValue: AttrValueType, isInverse: boolean)
     }
   }
   else if (isNumberArray(attrValue)) {
-    result = { type: "value", value: attrValue };
+    result = [{ type: "value", value: attrValue }];
   }
   else if (isArrayOfEmptyArray(attrValue)) {
     result = attrValue.map(arr => {
@@ -192,7 +192,7 @@ function makeAttrContent(attrValue: AttrValueType, isInverse: boolean)
 function makeAttribute(attrName: string, attrValue: AttrValueType, isInverse: boolean, attrIdx: number): Attribute {
   return {
     name: attrName,
-    content: makeAttrContent(attrValue, isInverse),
+    contents: makeAttrContents(attrValue, isInverse),
     edgePosition: { x: isInverse ? 0 : 200, y: 68 + attrIdx * 29 },
     inverse: isInverse,
   };
@@ -230,7 +230,7 @@ function createIfcNode(id: number): IfcNode {
     const isInverse = inverseNames.has(attrName);
 
     const attribute = makeAttribute(attrName, attrValue, isInverse, count);
-    hasValue(attribute.content) && count++;
+    hasValue(attribute.contents) && count++;
     node.attributes.push(attribute);
   }
 

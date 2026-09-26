@@ -71,21 +71,20 @@ function convertToNode(data: any): IfcNode {
   for (const attr of data.attributes) {
     const attribute = {
       name: attr.name,
-      content: attr.content,
+      contents: attr.contents,
       edgePosition: { x: attr.inverse ? 0 : 200, y: 68 + count * 29 },
       inverse: attr.inverse,
     };
-    hasValue(attr.content) && count++;
+    hasValue(attr.contents) && count++;
     node.attributes.push(attribute);
   }
 
-  if (data.references.length === 0) {
+  if (data.references.contents.length === 0) {
     return node;
   }
-  const contents = data.references.map((ref: any) => ref.content);
   const reference = {
     name: "Reference",
-    content: contents,
+    contents: data.references.contents,
     edgePosition: { x: 0, y: 25 },
     inverse: true,
   };
