@@ -174,12 +174,12 @@ const loadFile = async (event: Event) => {
     const selectedFile = input.files[0];
 
     try {
-      const [model, entities] = await loadFile_impl(selectedFile);
+      const [node, entities] = await loadFile_impl(selectedFile);
 
       ifcElements.value = entities;
-      nodes.value.push(model);
+      nodes.value.push(node);
       fileOpen.value = true;
-      console.log(model);
+      console.log(node);
     }
     catch(error) {
       // エラー処理
