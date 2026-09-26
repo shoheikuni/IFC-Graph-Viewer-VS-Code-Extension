@@ -40,3 +40,12 @@ export interface Position {
   x: number;
   y: number;
 }
+
+export interface SearchData {
+  items: SearchItem[];
+}
+
+export interface SearchItem {
+  id: number;
+  displayName: string;
+}

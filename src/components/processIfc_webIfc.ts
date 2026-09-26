@@ -1,6 +1,6 @@
 import * as WebIFC from "web-ifc"
 import { IfcValueInterface, HandleLike, isIfcValue, isHandleLike, isHandle, isIfcLineObject } from "./WebIFC_helper"
-import { Attribute, AttrContent, IfcNode } from "./interfaces";
+import { Attribute, AttrContent, IfcNode, SearchData } from "./interfaces";
 import { hasValue } from "./utils";
 
 
@@ -15,25 +15,38 @@ const settings = {
   COORDINATE_TO_ORIGIN: true
 };
 
-function getEntities(): { [key: string]: number[] } {
-  let entities: { [key: string]: number[] } = {};
+function getSearchData(): { [key: string]: SearchData } {
+  let searchData: { [key: string]: SearchData } = {};
   for (const expressID of ifcapi.GetAllLines(modelID)) {
     const lineEntity = ifcapi.GetLine(modelID, expressID);
     const ifcClassName = ifcapi.GetNameFromTypeCode(lineEntity.type);
-    if (!entities[ifcClassName]) entities[ifcClassName] = [];
-    entities[ifcClassName].push(expressID);
+
+    const displayNames = [`#${expressID}`];
+    if ("GlobalId" in lineEntity && isIfcValue(lineEntity.GlobalId)) {
+      displayNames.push(lineEntity.GlobalId.value); //IfcGloballyUniqueId
+    }
+    if ("Name" in lineEntity && isIfcValue(lineEntity.Name)) {
+      displayNames.push(lineEntity.Name.value); // IfcLabel
+    }
+
+    if (!searchData[ifcClassName]) searchData[ifcClassName] = { items: [] };
+
+    searchData[ifcClassName].items.push({
+      id: expressID,
+      displayName: displayNames.join(" | "),
+    });
   }
-  return entities;
+  return searchData;
 }
 
-export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {
+export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: SearchData }]> {
   const rawFileData = await ifcFile.arrayBuffer();
   modelID = ifcapi.OpenModel(new Uint8Array(rawFileData), settings); // いつ、どうやって閉じるの？
 
-  const entities = getEntities();
-  const ifcProjectId = entities["IfcProject"][0];
+  const searchData = getSearchData();
+  const rootEntityId = searchData["IfcProject"].items[0].id;
 
-  return [createIfcNode(ifcProjectId), entities];
+  return [createIfcNode(rootEntityId), searchData];
 }
 
 export async function addNode_impl(id: number): Promise<IfcNode> {
