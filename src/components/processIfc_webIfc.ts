@@ -161,7 +161,7 @@ function makeAttrContent(attrValue: AttrValueType, isInverse: boolean)
   }
   else if (isArrayOfHandleLikeArray(attrValue)) {
     result = attrValue.map(arr => {
-      const ids = arr.map(item => getId(item)).filter(item => item !== null);
+      const ids: number[] = arr.map(item => getId(item)).filter((item): item is number => item !== null);
       return { type: "id", value: ids }
     });
   }
