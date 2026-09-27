@@ -137,7 +137,7 @@ function makeAttribute(lineObjectKey: string, lineObjectValue: any, keyIsInverse
   return {
     name: lineObjectKey,
     content: content,
-    edgePosition: { x: keyIsInverse ? 0 : 200, y: 68 + attrIdx * 29 },
+    edgePosition: { x: keyIsInverse ? 0 : 200, y: 63 + attrIdx * 29 },
     inverse: keyIsInverse,
   };
 }

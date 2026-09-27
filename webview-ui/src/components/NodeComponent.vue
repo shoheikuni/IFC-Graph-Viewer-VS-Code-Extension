@@ -313,6 +313,8 @@ const isId = (content: AttrContent | AttrContent[]): boolean => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 24px;
+  line-height: 24px;
 }
 
 .inverse-attribute {
