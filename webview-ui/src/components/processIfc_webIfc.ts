@@ -15,6 +15,7 @@ const ifcapi = new WebIFC.IfcAPI();
 export async function initProcessIfc(wasmPath: string) {
   ifcapi.SetWasmPath(wasmPath);
   await ifcapi.Init();
+  initialized = true;
 }
 
 export function deinitProcessIfc() {
