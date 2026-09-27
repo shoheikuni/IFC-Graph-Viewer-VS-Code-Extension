@@ -66,17 +66,15 @@ export class IfcGraphViewerPanel {
       );
 
       IfcGraphViewerPanel.currentPanel = new IfcGraphViewerPanel(panel, extensionUri);
-
-      // IFCデータをWebviewに送る
-      panel.webview.postMessage({
-        type: "loadIfc",
-        data: { ifcText, fileName },
-      });
-
       panel.title = `[Graph] ${fileName}`;
-
-
     }
+
+    // IFCデータをWebviewに送る
+    IfcGraphViewerPanel.currentPanel._panel.webview.postMessage({
+      type: "loadIfc",
+      data: { ifcText, fileName },
+    });
+
   }
 
   /**
