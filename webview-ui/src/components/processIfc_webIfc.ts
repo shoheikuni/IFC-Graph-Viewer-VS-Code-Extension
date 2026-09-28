@@ -13,9 +13,11 @@ let initialized: boolean = false;
 
 const ifcapi = new WebIFC.IfcAPI();
 export async function initProcessIfc(wasmPath: string) {
+  console.log("[processIfc] Initializing IfcAPI");
   ifcapi.SetWasmPath(wasmPath);
   await ifcapi.Init();
   initialized = true;
+  console.log("[processIfc] Initializing IfcAPI done");
 }
 
 export function deinitProcessIfc() {
@@ -49,9 +51,9 @@ function loadBytes(bytes: Uint8Array): [IfcNode, { [key: string]: number[] }] {
     ifcapi.CloseModel(global_modelID);
   }
 
-  console.log("[IFC] OpenModel start");
+  console.log("[processIfc] OpenModel start");
   global_modelID = ifcapi.OpenModel(bytes, settings);
-  console.log("[IFC] OpenModel success", global_modelID);
+  console.log("[processIfc] OpenModel success", global_modelID);
 
   const entities = collectExpressIDs(global_modelID);
   const ifcProjectId = entities["IfcProject"][0];

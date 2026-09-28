@@ -172,7 +172,6 @@ function putModelOnCanvas(model: IfcNode, entities: { [key: string]: number[] })
   ifcElements.value = entities;
   nodes.value.push(model);
   fileOpen.value = true;
-  console.log(model);
 }
 
 async function loadFile(event: Event) {

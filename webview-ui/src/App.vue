@@ -11,7 +11,7 @@ onMounted(async () => {
   // IFC受信
   window.addEventListener("message", (event) => {
     if (event.data?.type === "loadIfc") {
-      console.log("[App] IFC received");
+      console.log(`[App] IFC file received: ${fileName.value}`);
       console.assert(processIfcInitialized());
       fileName.value = event.data.data.fileName;
       canvas.value!.loadIfcFromText(event.data.data.ifcText);
@@ -22,6 +22,7 @@ onMounted(async () => {
   console.log("[App] wasmDir =", wasmDir);
   await initProcessIfc(wasmDir);
 
+  console.log("[App] Posting ready command");
   vscode.postMessage({ command: "ready" });
 });
 onUnmounted(() => {

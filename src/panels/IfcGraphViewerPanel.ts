@@ -167,6 +167,8 @@ export class IfcGraphViewerPanel {
           // Add switch case statements here as webview message commands
           // are created within the webview context
           case "ready":
+            console.log("[IfcGraphViewerPanel] ready command received");
+            console.log(`[IfcGraphViewerPanel] Posting loadIfc message with fileName: ${this._fileName}`);
             // IFCデータをWebviewに送る
             webview.postMessage({
               type: "loadIfc",
