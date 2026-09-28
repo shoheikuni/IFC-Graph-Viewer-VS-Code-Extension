@@ -1,4 +1,5 @@
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
+import * as path from "path"
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 
@@ -13,8 +14,8 @@ import { getNonce } from "../utilities/getNonce";
  * - Setting message listeners so data can be passed between the webview and extension
  */
 export class IfcGraphViewerPanel {
-  public static currentPanel: IfcGraphViewerPanel | undefined;
-  private readonly _panel: WebviewPanel;
+  private static panels = new Map<string, IfcGraphViewerPanel>();
+
   private _disposables: Disposable[] = [];
 
   /**
@@ -23,18 +24,20 @@ export class IfcGraphViewerPanel {
    * @param panel A reference to the webview panel
    * @param extensionUri The URI of the directory containing the extension
    */
-  private constructor(panel: WebviewPanel, extensionUri: Uri) {
-    this._panel = panel;
+  private constructor(private readonly panel: WebviewPanel,
+                      private readonly extensionUri: Uri,
+                      private readonly ifcFileUri: Uri,
+                      private readonly ifcText: string) {
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
-    this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+    this.panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
     // Set the HTML content for the webview panel
-    this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
+    this.panel.webview.html = this._getWebviewContent(this.panel.webview, extensionUri);
 
     // Set an event listener to listen for messages passed from the webview context
-    this._setWebviewMessageListener(this._panel.webview);
+    this._setWebviewMessageListener(this.panel.webview);
   }
 
   /**
@@ -43,10 +46,10 @@ export class IfcGraphViewerPanel {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri, ifcText: string, fileName: string) {
-    if (IfcGraphViewerPanel.currentPanel) {
+  public static render(extensionUri: Uri, ifcFileUri: Uri, ifcText: string) {
+    if (IfcGraphViewerPanel.panels.has(ifcFileUri.toString())) {
       // If the webview panel already exists reveal it
-      IfcGraphViewerPanel.currentPanel._panel.reveal(ViewColumn.One);
+      IfcGraphViewerPanel.panels.get(ifcFileUri.toString())!.panel.reveal(ViewColumn.One);
     } else {
       // If a webview panel does not already exist create and show a new one
       const panel = window.createWebviewPanel(
@@ -60,22 +63,15 @@ export class IfcGraphViewerPanel {
         {
           // Enable JavaScript in the webview
           enableScripts: true,
+          retainContextWhenHidden: true, // タブ切り替え時にwebviewを破棄せず非表示にするだけ(メモリ使用量注意)
           // Restrict the webview to only load resources from the `out` and `webview-ui/build` directories
           localResourceRoots: [Uri.joinPath(extensionUri, "out"), Uri.joinPath(extensionUri, "webview-ui", "build")],
         }
       );
+      panel.title = `[Graph] ${path.basename(ifcFileUri.path)}`;
 
-      IfcGraphViewerPanel.currentPanel = new IfcGraphViewerPanel(panel, extensionUri);
-
-      // IFCデータをWebviewに送る
-      panel.webview.postMessage({
-        type: "loadIfc",
-        data: { ifcText, fileName },
-      });
-
-      panel.title = `[Graph] ${fileName}`;
-
-
+      const viewer = new IfcGraphViewerPanel(panel, extensionUri, ifcFileUri, ifcText);
+      IfcGraphViewerPanel.panels.set(ifcFileUri.toString(), viewer);
     }
   }
 
@@ -83,10 +79,10 @@ export class IfcGraphViewerPanel {
    * Cleans up and disposes of webview resources when the webview panel is closed.
    */
   public dispose() {
-    IfcGraphViewerPanel.currentPanel = undefined;
+    IfcGraphViewerPanel.panels.delete(this.ifcFileUri.toString());
 
     // Dispose of the current webview panel
-    this._panel.dispose();
+    this.panel.dispose();
 
     // Dispose of all disposables (i.e. commands) for the current webview panel
     while (this._disposables.length) {
@@ -168,6 +164,15 @@ export class IfcGraphViewerPanel {
         switch (command) {
           // Add switch case statements here as webview message commands
           // are created within the webview context
+          case "ready":
+            console.log("[IfcGraphViewerPanel] ready command received");
+            console.log(`[IfcGraphViewerPanel] Posting loadIfc message with fileUri: ${this.ifcFileUri}`);
+            // IFCデータをWebviewに送る
+            webview.postMessage({
+              type: "loadIfc",
+              data: { ifcText: this.ifcText, fileName: path.basename(this.ifcFileUri.path) },
+            });
+            break;
           default:
         }
       },

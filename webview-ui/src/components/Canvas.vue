@@ -8,7 +8,7 @@ import { hasValue } from "./utils";
 import PropertyArea from "./PropertyArea.vue";
 import SearchEntity from "./SearchEntity.vue";
 import ToolbarComponent from "./ToolbarComponent.vue";
-import { loadFile_impl, addNode_impl, addNodeById_impl, loadIfcFromText_impl } from "./processIfc_webIfc"
+import { addNode_impl, addNodeById_impl, loadIfcFromText_impl } from "./processIfc_webIfc"
 
 
 // ノードとエッジのデータ
@@ -172,24 +172,6 @@ function putModelOnCanvas(model: IfcNode, entities: { [key: string]: number[] })
   ifcElements.value = entities;
   nodes.value.push(model);
   fileOpen.value = true;
-  console.log(model);
-}
-
-async function loadFile(event: Event) {
-  const input = event.target as HTMLInputElement;
-  if (input.files?.length) {
-    const selectedFile = input.files[0];
-
-    try {
-      const [model, entities] = await loadFile_impl(selectedFile);
-
-      putModelOnCanvas(model, entities);
-    }
-    catch(error) {
-      // エラー処理
-      console.error("ファイルの読み込みに失敗しました:", error);
-    }
-  }
 }
 
 function loadIfcFromText(ifcText: string) {
@@ -509,13 +491,6 @@ defineExpose({loadIfcFromText});
 </script>
 
 <template>
-  <input
-    type="file"
-    @change="loadFile"
-    class="fileInput"
-    v-if="!fileOpen"
-  />
-
   <div class="container">
     <div
       class="canvas"
@@ -606,12 +581,6 @@ defineExpose({loadIfcFromText});
 .container {
   display: flex;
   height: 100vh;
-}
-.fileInput {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 1;
 }
 .canvas {
   width: 75vw;

@@ -2,23 +2,19 @@
 import Canvas from "./components/Canvas.vue";
 import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { initProcessIfc, deinitProcessIfc, processIfcInitialized } from "./components/processIfc_webIfc"
+import { vscode } from "./utilities/vscode.ts";
 
 const canvas = useTemplateRef('canvas');
-let unloadedData: { ifcText: string, fileName: string } | undefined;
 const fileName = ref<string>("");
 
 onMounted(async () => {
   // IFC受信
   window.addEventListener("message", (event) => {
     if (event.data?.type === "loadIfc") {
-      console.log("[App] IFC received");
-      if (processIfcInitialized()) {
-	fileName.value = event.data.data.fileName;
-        canvas.value!.loadIfcFromText(event.data.data.ifcText);
-      }
-      else {
-        unloadedData = event.data.data; // processIfc_webIfcの初期化後まで保持する
-      }
+      console.log(`[App] IFC file received: ${fileName.value}`);
+      console.assert(processIfcInitialized());
+      fileName.value = event.data.data.fileName;
+      canvas.value!.loadIfcFromText(event.data.data.ifcText);
     }
   });
 
@@ -26,13 +22,8 @@ onMounted(async () => {
   console.log("[App] wasmDir =", wasmDir);
   await initProcessIfc(wasmDir);
 
-  // 受信済みのIFCテキストを読み込み
-  if (unloadedData) {
-    fileName.value = unloadedData.fileName;
-    canvas.value!.loadIfcFromText(unloadedData.ifcText);
-    unloadedData = undefined;
-  }
-
+  console.log("[App] Posting ready command");
+  vscode.postMessage({ command: "ready" });
 });
 onUnmounted(() => {
   deinitProcessIfc();
