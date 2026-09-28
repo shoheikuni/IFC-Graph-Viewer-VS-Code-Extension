@@ -5,7 +5,6 @@ import { initProcessIfc, deinitProcessIfc, processIfcInitialized } from "./compo
 import { vscode } from "./utilities/vscode.ts";
 
 const canvas = useTemplateRef('canvas');
-let unloadedData: { ifcText: string, fileName: string } | undefined;
 const fileName = ref<string>("");
 
 onMounted(async () => {
@@ -13,13 +12,9 @@ onMounted(async () => {
   window.addEventListener("message", (event) => {
     if (event.data?.type === "loadIfc") {
       console.log("[App] IFC received");
-      if (processIfcInitialized()) {
-        fileName.value = event.data.data.fileName;
-        canvas.value!.loadIfcFromText(event.data.data.ifcText);
-      }
-      else {
-        unloadedData = event.data.data; // processIfc_webIfcの初期化後まで保持する
-      }
+      console.assert(processIfcInitialized());
+      fileName.value = event.data.data.fileName;
+      canvas.value!.loadIfcFromText(event.data.data.ifcText);
     }
   });
 
@@ -28,14 +23,6 @@ onMounted(async () => {
   await initProcessIfc(wasmDir);
 
   vscode.postMessage({ command: "ready" });
-
-  // 受信済みのIFCテキストを読み込み
-  if (unloadedData) {
-    fileName.value = unloadedData.fileName;
-    canvas.value!.loadIfcFromText(unloadedData.ifcText);
-    unloadedData = undefined;
-  }
-
 });
 onUnmounted(() => {
   deinitProcessIfc();
