@@ -63,6 +63,7 @@ export class IfcGraphViewerPanel {
         {
           // Enable JavaScript in the webview
           enableScripts: true,
+          retainContextWhenHidden: true, // タブ切り替え時にwebviewを破棄せず非表示にするだけ(メモリ使用量注意)
           // Restrict the webview to only load resources from the `out` and `webview-ui/build` directories
           localResourceRoots: [Uri.joinPath(extensionUri, "out"), Uri.joinPath(extensionUri, "webview-ui", "build")],
         }
