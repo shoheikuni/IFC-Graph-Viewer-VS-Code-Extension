@@ -6,7 +6,7 @@ export function activate(context: ExtensionContext) {
     async (uri?: Uri) => {
 
       let ifcText: string | undefined;
-      let fileName: string | undefined;
+      let fileUri: Uri | undefined;
 
       // エクスプローラ右クリック（ファイルuriが渡される）
       if (uri) {
@@ -16,7 +16,7 @@ export function activate(context: ExtensionContext) {
         }
         const bytes = await workspace.fs.readFile(uri);
         ifcText = bytes.toString();
-        fileName = uri.path.split("/").pop()!;
+        fileUri = uri;
       }
       // コマンドパレットまたはエディタ右クリック
       else {
@@ -33,11 +33,11 @@ export function activate(context: ExtensionContext) {
         }
 
         ifcText = document.getText();
-        fileName = document.fileName.split(/[\\/]/).pop()!;
+        fileUri = document.uri;
       }
 
       // Webview 起動
-      IfcGraphViewerPanel.render(context.extensionUri, ifcText, fileName);
+      IfcGraphViewerPanel.render(context.extensionUri, fileUri, ifcText);
     });
 
   // Add command to the extension context
