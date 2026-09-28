@@ -17,6 +17,9 @@ export class IfcGraphViewerPanel {
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
 
+  private _ifcText: string = "";
+  private _fileName: string = "";
+
   /**
    * The IfcGraphViewerPanel class private constructor (called only from the render method).
    *
@@ -69,11 +72,8 @@ export class IfcGraphViewerPanel {
       panel.title = `[Graph] ${fileName}`;
     }
 
-    // IFCデータをWebviewに送る
-    IfcGraphViewerPanel.currentPanel._panel.webview.postMessage({
-      type: "loadIfc",
-      data: { ifcText, fileName },
-    });
+    IfcGraphViewerPanel.currentPanel._fileName = fileName;
+    IfcGraphViewerPanel.currentPanel._ifcText = ifcText;
 
   }
 
@@ -166,6 +166,13 @@ export class IfcGraphViewerPanel {
         switch (command) {
           // Add switch case statements here as webview message commands
           // are created within the webview context
+          case "ready":
+            // IFCデータをWebviewに送る
+            webview.postMessage({
+              type: "loadIfc",
+              data: { ifcText: this._ifcText, fileName: this._fileName },
+            });
+            break;
           default:
         }
       },

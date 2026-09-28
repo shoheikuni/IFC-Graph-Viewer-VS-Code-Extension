@@ -2,6 +2,7 @@
 import Canvas from "./components/Canvas.vue";
 import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { initProcessIfc, deinitProcessIfc, processIfcInitialized } from "./components/processIfc_webIfc"
+import { vscode } from "./utilities/vscode.ts";
 
 const canvas = useTemplateRef('canvas');
 let unloadedData: { ifcText: string, fileName: string } | undefined;
@@ -25,6 +26,8 @@ onMounted(async () => {
   const wasmDir = (window as any).__WASM_DIR__;
   console.log("[App] wasmDir =", wasmDir);
   await initProcessIfc(wasmDir);
+
+  vscode.postMessage({ command: "ready" });
 
   // 受信済みのIFCテキストを読み込み
   if (unloadedData) {
