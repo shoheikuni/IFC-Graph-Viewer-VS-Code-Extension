@@ -48,7 +48,9 @@ const rectSelecting = ref(false);
 // 右クリック位置
 const rightClickPosition = ref({ x: 0, y: 0 });
 
-const fileOpen = ref<Boolean>(false);
+const fileInput = ref<HTMLInputElement | null>(null);
+const viewFilename = ref<string>("");
+const isLoading = ref(false);
 
 // 描画領域の拡大縮小、移動
 const scale = ref(1);
@@ -171,8 +173,25 @@ function endDrag() {
 function putNodeOnCanvas(node: IfcNode, entities: { [key: string]: number[] }) {
   ifcElements.value = entities;
   nodes.value.push(node);
-  fileOpen.value = true;
 }
+
+const triggerFileInput = () => {
+  fileInput.value?.click();
+};
+
+const handleFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (target.files && target.files.length > 0) {
+    loadFile(target.files[0]); // 選択されたファイルを処理
+  }
+};
+const handleDrop = (event: DragEvent) => {
+  event.preventDefault();
+  const files = event.dataTransfer?.files;
+  if (files && files.length > 0) {
+    loadFile(files[0]); // 選択されたファイルを処理
+  }
+};
 
 function loadIfcFromText(ifcText: string) {
   try {
@@ -491,6 +510,29 @@ defineExpose({loadIfcFromText});
 </script>
 
 <template>
+  <div
+    class="file-drop-area"
+    @dragenter.prevent
+    @dragover.prevent
+    @drop="handleDrop"
+    @click="triggerFileInput"
+    v-if="viewFilename === ''"
+  >
+    Drag & Drop or Click
+    <input
+      type="file"
+      ref="fileInput"
+      @change="handleFileSelect"
+      class="hidden-input"
+    />
+  </div>
+  <h4 v-else class="fileInput" style="margin-top: 0">
+    {{ viewFilename }}
+  </h4>
+
+  <!-- 処理中の表示 -->
+  <div v-if="isLoading" class="loading-overlay">Now Loading...</div>
+
   <div class="container">
     <div
       class="canvas"
@@ -582,23 +624,78 @@ defineExpose({loadIfcFromText});
   display: flex;
   height: 100vh;
 }
+
+.file-drop-area {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100vh;
+  background-color: #f0f0f0;
+  border: 5px dashed #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.file-drop-area:hover {
+  background-color: #f9f9f9;
+}
+
+.fileInput {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明の背景 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5em;
+  z-index: 1000; /* 他の要素より前面に表示 */
+}
+
 .canvas {
   width: 75vw;
   height: 100vh;
   overflow: auto;
   position: relative;
 }
+
 .sidebar {
   position: absolute;
   top: 0;
   right: 0;
-  width: 25vw; /* 1/4 of the screen width */
-  height: 100vh; /* Full height of the container */
-  z-index: 2; /* Overlay on top of the canvas */
-  word-wrap: break-word; /* 長い単語でも折り返しを行う */
-  overflow: auto; /* 必要に応じてスクロールバーを表示 */
+  /* 1/4 of the screen width */
+  width: 25vw;
+  /* Full height of the container */
+  height: 100vh;
+  /* Overlay on top of the canvas */
+  z-index: 2;
+  /* 長い単語でも折り返しを行う */
+  word-wrap: break-word;
+  /* 必要に応じてスクロールバーを表示 */
+  overflow: auto;
   background-color: #f0f0f0;
 }
+
 .node-container {
   transform-origin: 0 0;
   position: absolute;
@@ -607,6 +704,7 @@ defineExpose({loadIfcFromText});
   width: 100%;
   height: 100%;
 }
+
 .edge-container {
   position: absolute;
   top: 0;
@@ -614,11 +712,13 @@ defineExpose({loadIfcFromText});
   width: 100%;
   height: 100%;
 }
+
 .selection-rectangle {
   position: absolute;
   border: 2px dashed #4a90e2; /* 青い点線の境界線 */
   background-color: rgba(74, 144, 226, 0.3); /* 半透明の青色背景 */
 }
+
 .add-menu {
   position: absolute;
   overflow: auto;
@@ -627,6 +727,7 @@ defineExpose({loadIfcFromText});
   width: 100%;
   height: 100%;
 }
+
 .align-icons {
   position: absolute;
   top: 10px;
