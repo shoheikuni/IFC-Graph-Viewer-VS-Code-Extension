@@ -1,5 +1,5 @@
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
-import * as path from "path"
+import * as path from "path";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 
