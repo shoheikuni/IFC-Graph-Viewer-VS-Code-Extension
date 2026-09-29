@@ -48,7 +48,6 @@ const rectSelecting = ref(false);
 // 右クリック位置
 const rightClickPosition = ref({ x: 0, y: 0 });
 
-const fileInput = ref<HTMLInputElement | null>(null);
 const viewFilename = ref<string>("");
 const isLoading = ref(false);
 
@@ -174,24 +173,6 @@ function putNodeOnCanvas(node: IfcNode, entities: { [key: string]: number[] }) {
   ifcElements.value = entities;
   nodes.value.push(node);
 }
-
-const triggerFileInput = () => {
-  fileInput.value?.click();
-};
-
-const handleFileSelect = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (target.files && target.files.length > 0) {
-    loadFile(target.files[0]); // 選択されたファイルを処理
-  }
-};
-const handleDrop = (event: DragEvent) => {
-  event.preventDefault();
-  const files = event.dataTransfer?.files;
-  if (files && files.length > 0) {
-    loadFile(files[0]); // 選択されたファイルを処理
-  }
-};
 
 function loadIfcFromText(ifcText: string) {
   try {
@@ -510,23 +491,7 @@ defineExpose({loadIfcFromText});
 </script>
 
 <template>
-  <div
-    class="file-drop-area"
-    @dragenter.prevent
-    @dragover.prevent
-    @drop="handleDrop"
-    @click="triggerFileInput"
-    v-if="viewFilename === ''"
-  >
-    Drag & Drop or Click
-    <input
-      type="file"
-      ref="fileInput"
-      @change="handleFileSelect"
-      class="hidden-input"
-    />
-  </div>
-  <h4 v-else class="fileInput" style="margin-top: 0">
+  <h4 class="fileInput" style="margin-top: 0">
     {{ viewFilename }}
   </h4>
 
@@ -623,27 +588,6 @@ defineExpose({loadIfcFromText});
 .container {
   display: flex;
   height: 100vh;
-}
-
-.file-drop-area {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 3;
-  width: 100%;
-  height: 100vh;
-  background-color: #f0f0f0;
-  border: 5px dashed #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #aaa;
-  cursor: pointer;
-}
-
-.file-drop-area:hover {
-  background-color: #f9f9f9;
 }
 
 .fileInput {
