@@ -56,9 +56,6 @@ const scale = ref(1);
 const position = ref({ x: 0, y: 0 });
 const zoomContainer = ref<HTMLElement | null>(null);
 
-// ドラッグオーバー時のハイライト表示用
-const isDraggingOver = ref(false);
-
 // サイドバーの幅（px）
 const sidebarWidth = ref(window.innerWidth * 0.25); // 初期値: 25vw
 const isResizingSidebar = ref(false);
@@ -213,31 +210,6 @@ function endDrag() {
 function putNodeOnCanvas(node: IfcNode, searchData: { [key: string]: SearchData }) {
   ifcElements.value = searchData;
   nodes.value.push(node);
-}
-
-function clearCanvas() {
-  nodes.value = [];
-  edges.value = [];
-  viewFilename.value = "";
-  fileInput.value = null;
-
-  isLoading.value = false;
-  showSearch.value = false;
-  viewedAttrNode.value = null;
-  ifcElements.value = {};
-
-  selectedNodeIds.value = [];
-  rectSelectedNodeIds.value = [];
-  previousSelectedNodeIds.value = [];
-  dragStartNodePositions.value = {};
-  drawingEdge.value = null;
-  isDraggingOver.value = false;
-  rightClickPosition.value = { x: 0, y: 0 };
-  zoomContainer.value = null;
-  scale.value = 1;
-  position.value = { x: 0, y: 0 };
-  dragging.value = false;
-  rectSelecting.value = false;
 }
 
 function loadIfcFromText(ifcText: string) {
@@ -557,31 +529,6 @@ const closeSearch = () => {
   showSearch.value = false;
 };
 
-// ドラッグオーバーイベントのハンドラ
-const handleDragEnter = (event: DragEvent) => {
-  if (event.dataTransfer?.types?.includes("Files")) {
-    event.stopPropagation();
-    event.preventDefault();
-    isDraggingOver.value = true;
-  }
-};
-
-const handleDragLeave = (event: DragEvent) => {
-  if (event.dataTransfer?.types?.includes("Files")) {
-    event.stopPropagation();
-    event.preventDefault();
-    isDraggingOver.value = false;
-  }
-};
-
-const handleDragOver = (event: DragEvent) => {
-  if (event.dataTransfer?.types?.includes("Files")) {
-    event.stopPropagation();
-    event.preventDefault();
-    isDraggingOver.value = true;
-  }
-};
-
 defineExpose({loadIfcFromText});
 </script>
 
@@ -593,14 +540,7 @@ defineExpose({loadIfcFromText});
   <!-- 処理中の表示 -->
   <div :class="['loading-overlay', { active: isLoading }]">Processing...</div>
 
-  <div
-    class="container"
-    @dragenter="handleDragEnter"
-    @dragleave="handleDragLeave"
-    @dragover="handleDragOver"
-    @drop="handleDrop"
-    :class="{ 'drag-over': isDraggingOver && viewFilename !== '' }"
-  >
+  <div class="container">
     <div
       class="sidebar-resize-handle"
       :style="{ right: sidebarWidth + 'px', height: '100vh' }"
@@ -830,18 +770,5 @@ defineExpose({loadIfcFromText});
   color: gray;
   font-style: italic;
   padding: 8px 0;
-}
-
-/* ドラッグオーバー時のハイライト表示 */
-.container.drag-over::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.2);
-  z-index: 10;
-  pointer-events: none; /* マウスイベントを下層に通す */
 }
 </style>
