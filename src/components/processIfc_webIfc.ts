@@ -58,7 +58,7 @@ export async function addNodeById_impl(id: number): Promise<IfcNode> {
 }
 
 
-function isEmptyArray(x: unknown): boolean {
+function isEmptyArray(x: unknown): x is [] {
   return Array.isArray(x) && x.length === 0;
 }
 
@@ -66,7 +66,7 @@ function isIfcValueArray(x: unknown): x is IfcValueInterface[] {
   return Array.isArray(x) &&  x.every(item => isIfcValue(item));
 }
 
-function isHandleLikeArray(x: unknown): x is (HandleLike)[] {
+function isHandleLikeArray(x: unknown): x is HandleLike[] {
   return Array.isArray(x) &&  x.every(item => isHandleLike(item));
 }
 
@@ -74,7 +74,7 @@ function isNumberArray(x: unknown): x is number[] {
   return Array.isArray(x) && x.every(item => typeof item === 'number');
 }
 
-function isArrayOfEmptyArray(x: unknown): boolean {
+function isArrayOfEmptyArray(x: unknown): x is [][] {
   return Array.isArray(x) && x.length > 0 && x.every(item => isEmptyArray(item));
 }
 
@@ -82,7 +82,7 @@ function isArrayOfIfcValueArray(x: unknown): x is IfcValueInterface[][] {
   return Array.isArray(x) && x.length > 0 && x.filter(item => !isEmptyArray(item)).every(item => isIfcValueArray(item));
 }
 
-function isArrayOfHandleLikeArray(x: unknown): x is (HandleLike)[][] {
+function isArrayOfHandleLikeArray(x: unknown): x is HandleLike[][] {
   return Array.isArray(x) && x.length > 0 && x.filter(item => !isEmptyArray(item)).every(item => isHandleLikeArray(item));
 }
 
@@ -171,19 +171,19 @@ function makeAttrContents(attrValue: AttrValueType, isInverse: boolean)
     result = [{ type: "value", value: attrValue }];
   }
   else if (isArrayOfEmptyArray(attrValue)) {
-    result = attrValue.map(arr => {
+    result = attrValue.map((arr: []) => {
       console.assert(arr.length === 0);
       return { type: "value", value: [] }
     });
   }
   else if (isArrayOfHandleLikeArray(attrValue)) {
-    result = attrValue.map(arr => {
+    result = attrValue.map((arr: HandleLike[]) => {
       const ids: number[] = arr.map(item => getId(item)).filter((item): item is number => item !== null);
       return { type: "id", value: ids }
     });
   }
   else if (isArrayOfIfcValueArray(attrValue)) {
-    result = attrValue.map(arr => {
+    result = attrValue.map((arr: IfcValueInterface[]) => {
       let numbers: number[] | undefined;
       if (numbers = asNumbers(arr)) {
         return { type: "value", value: numbers };
