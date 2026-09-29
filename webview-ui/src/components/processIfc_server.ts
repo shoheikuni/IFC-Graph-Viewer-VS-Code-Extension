@@ -1,12 +1,12 @@
 import axios from "axios";
-import { IfcNode } from "./interfaces";
+import { IfcNode, SearchData } from "./interfaces";
 import { hasValue } from "./utils";
 
 const endpoint = import.meta.env.VITE_API_ENDPOINT as string;
 
 let filepath = "";
 
-export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {
+export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: SearchData }]> {
 
   // FormData オブジェクトを作成してファイルを追加
   const formData = new FormData();
@@ -21,7 +21,7 @@ export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: st
     })
     .then((response) => {
       filepath = response.data.path;
-      return [convertToNode(response.data.model), response.data.entities];
+      return [convertToNode(response.data.root), response.data.searchData];
     });
 }
 
