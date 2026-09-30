@@ -1,11 +1,10 @@
 import { AttrContent } from "./interfaces";
 
 // attributeに値があるかどうか
-export function hasValue(content: AttrContent | AttrContent[]): boolean {
-  if (Array.isArray(content)) {
-    return content.length > 0;
-  } else {
-    const value = content.value;
-    return value !== null && value !== undefined && value !== "";
-  }
+export function hasValue(contents: AttrContent[]): boolean {
+  return contents.length > 0;
+}
+
+export function isObject(x: unknown): x is object {
+  return x !== null && (typeof x === 'object' || typeof x === 'function');
 }
