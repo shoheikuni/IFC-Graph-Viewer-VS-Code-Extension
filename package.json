@@ -3,7 +3,7 @@
   "name": "ifc-graph-viewer-vs-code-extension",
   "displayName": "IFC Graph Viewer VS Code Extension",
   "description": "Display IFC graph structure",
-  "version": "0.0.1",
+  "version": "0.5.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/shoheikuni/IFC-Graph-Viewer-VS-Code-Extension.git"
