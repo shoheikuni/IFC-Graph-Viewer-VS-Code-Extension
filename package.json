@@ -1,7 +1,7 @@
 {
   "publisher": "shoheikuni",
-  "name": "ifc-graph-viewer",
-  "displayName": "ifc-graph-viewer",
+  "name": "ifc-graph-viewer-vs-code-extension",
+  "displayName": "IFC Graph Viewer VS Code Extension",
   "description": "Display IFC graph structure",
   "version": "0.0.1",
   "engines": {
