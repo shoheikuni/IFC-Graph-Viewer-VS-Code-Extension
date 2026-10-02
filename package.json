@@ -1,9 +1,14 @@
 {
   "publisher": "shoheikuni",
-  "name": "ifc-graph-viewer",
-  "displayName": "ifc-graph-viewer",
+  "name": "ifc-graph-viewer-vs-code-extension",
+  "displayName": "IFC Graph Viewer VS Code Extension",
   "description": "Display IFC graph structure",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shoheikuni/IFC-Graph-Viewer-VS-Code-Extension.git"
+  },
+  "license": "MIT",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -18,17 +23,17 @@
     "menus": {
       "explorer/context": [
         {
-	  "command": "ifc-graph-viewer.openViewer",
-	  "when": "resourceExtname == .ifc",
-	  "group": "navigation"
-	}
+          "command": "ifc-graph-viewer.openViewer",
+          "when": "resourceExtname == .ifc",
+          "group": "navigation"
+        }
       ],
       "editor/context": [
         {
-	  "command": "ifc-graph-viewer.openViewer",
-	  "when": "resourceExtname == .ifc",
-	  "group": "navigation"
-	}
+          "command": "ifc-graph-viewer.openViewer",
+          "when": "resourceExtname == .ifc",
+          "group": "navigation"
+        }
       ]
     }
   },
@@ -40,7 +45,8 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint src --ext ts",
+    "licenses": "license-checker-rseidelsohn --production"
   },
   "devDependencies": {
     "@types/glob": "^7.1.3",
@@ -50,6 +56,7 @@
     "@typescript-eslint/parser": "^4.14.1",
     "eslint": "^7.19.0",
     "glob": "^7.1.6",
+    "license-checker-rseidelsohn": "^4.4.2",
     "prettier": "^2.2.1",
     "typescript": "^4.1.3",
     "vscode-test": "^1.5.0"
