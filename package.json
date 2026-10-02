@@ -18,17 +18,17 @@
     "menus": {
       "explorer/context": [
         {
-	  "command": "ifc-graph-viewer.openViewer",
-	  "when": "resourceExtname == .ifc",
-	  "group": "navigation"
-	}
+          "command": "ifc-graph-viewer.openViewer",
+          "when": "resourceExtname == .ifc",
+          "group": "navigation"
+        }
       ],
       "editor/context": [
         {
-	  "command": "ifc-graph-viewer.openViewer",
-	  "when": "resourceExtname == .ifc",
-	  "group": "navigation"
-	}
+          "command": "ifc-graph-viewer.openViewer",
+          "when": "resourceExtname == .ifc",
+          "group": "navigation"
+        }
       ]
     }
   },
