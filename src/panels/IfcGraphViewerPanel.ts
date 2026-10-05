@@ -16,6 +16,10 @@ import { getNonce } from "../utilities/getNonce";
 export class IfcGraphViewerPanel {
   private static panels = new Map<string, IfcGraphViewerPanel>();
 
+  private readonly _panel: WebviewPanel;
+  private readonly _extensionUri: Uri;
+  private readonly _ifcFileUri: Uri;
+  private readonly _ifcText: string;
   private _disposables: Disposable[] = [];
 
   /**
@@ -24,20 +28,21 @@ export class IfcGraphViewerPanel {
    * @param panel A reference to the webview panel
    * @param extensionUri The URI of the directory containing the extension
    */
-  private constructor(private readonly panel: WebviewPanel,
-                      private readonly extensionUri: Uri,
-                      private readonly ifcFileUri: Uri,
-                      private readonly ifcText: string) {
+  private constructor(panel: WebviewPanel, extensionUri: Uri, ifcFileUri: Uri, ifcText: string) {
+    this._panel = panel;
+    this._extensionUri = extensionUri;
+    this._ifcFileUri = ifcFileUri;
+    this._ifcText = ifcText;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
-    this.panel.onDidDispose(() => this.dispose(), null, this._disposables);
+    this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
     // Set the HTML content for the webview panel
-    this.panel.webview.html = this._getWebviewContent(this.panel.webview, extensionUri);
+    this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
 
     // Set an event listener to listen for messages passed from the webview context
-    this._setWebviewMessageListener(this.panel.webview);
+    this._setWebviewMessageListener(this._panel.webview);
   }
 
   /**
@@ -49,7 +54,7 @@ export class IfcGraphViewerPanel {
   public static render(extensionUri: Uri, ifcFileUri: Uri, ifcText: string) {
     if (IfcGraphViewerPanel.panels.has(ifcFileUri.toString())) {
       // If the webview panel already exists reveal it
-      IfcGraphViewerPanel.panels.get(ifcFileUri.toString())!.panel.reveal(ViewColumn.One);
+      IfcGraphViewerPanel.panels.get(ifcFileUri.toString())!._panel.reveal(ViewColumn.One);
     } else {
       // If a webview panel does not already exist create and show a new one
       const panel = window.createWebviewPanel(
@@ -79,10 +84,10 @@ export class IfcGraphViewerPanel {
    * Cleans up and disposes of webview resources when the webview panel is closed.
    */
   public dispose() {
-    IfcGraphViewerPanel.panels.delete(this.ifcFileUri.toString());
+    IfcGraphViewerPanel.panels.delete(this._ifcFileUri.toString());
 
     // Dispose of the current webview panel
-    this.panel.dispose();
+    this._panel.dispose();
 
     // Dispose of all disposables (i.e. commands) for the current webview panel
     while (this._disposables.length) {
@@ -157,11 +162,11 @@ export class IfcGraphViewerPanel {
           // are created within the webview context
           case "ready":
             console.log("[IfcGraphViewerPanel] ready command received");
-            console.log(`[IfcGraphViewerPanel] Posting loadIfc message with fileUri: ${this.ifcFileUri}`);
+            console.log(`[IfcGraphViewerPanel] Posting loadIfc message with fileUri: ${this._ifcFileUri}`);
             // IFCデータをWebviewに送る
             webview.postMessage({
               type: "loadIfc",
-              data: { ifcText: this.ifcText, fileName: path.basename(this.ifcFileUri.path) },
+              data: { ifcText: this._ifcText, fileName: path.basename(this._ifcFileUri.path) },
             });
             break;
           default:
