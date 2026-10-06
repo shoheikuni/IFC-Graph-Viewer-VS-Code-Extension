@@ -170,9 +170,9 @@ function endDrag() {
 
 function loadIfcFromText(ifcText: string) {
   try {
-    const [model, entities] = loadIfcFromText_impl(ifcText);
+    const [node, entities] = loadIfcFromText_impl(ifcText);
     ifcElements.value = entities;
-    nodes.value.push(model);
+    nodes.value.push(node);
     fileOpen.value = true;
   }
   catch(error) {
@@ -306,14 +306,14 @@ const selectNode = (node: IfcNode, toggle = false) => {
 };
 
 // ノードを追加するハンドラ
-async function addNode_(
+const addNode_ = async (
   srcId: number,
   dstId: number,
   srcName: string,
   inverse: boolean,
   dstPosition: Position,
   idx: number
-) {
+) => {
   try {
     const node = await addNode_impl(dstId);
 
@@ -379,7 +379,7 @@ async function addNode_(
     // 描画中のエッジを削除
     updateDrawingEdge(null);
   }
-}
+};
 
 const addNode = (
   nodeId: number,
@@ -443,7 +443,7 @@ const selectEntity = (id: number) => {
   addNodeById(id, { ...rightClickPosition.value });
 };
 
-async function addNodeById(id: number, dstPosition: Position) {
+const addNodeById = async (id: number, dstPosition: Position) => {
   try {
     const node = await addNodeById_impl(id);
 
@@ -456,7 +456,7 @@ async function addNodeById(id: number, dstPosition: Position) {
   catch(error) {
     console.log(error);
   }
-}
+};
 
 const getRelativePosition = (event: MouseEvent) => {
   const container = zoomContainer.value;
