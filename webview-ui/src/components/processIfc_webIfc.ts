@@ -1,6 +1,6 @@
 import * as WebIFC from "web-ifc"
 import { IfcValueInterface, HandleLike, isIfcValue, isHandleLike, isHandle, isIfcLineObject } from "./WebIFC_helper"
-import { Attribute, AttrContent, IfcNode } from "./interfaces";
+import { Attribute, AttrContent, IfcNode, SearchData } from "./interfaces";
 import { hasValue } from "./utils";
 
 
@@ -35,18 +35,31 @@ const settings = {
 };
 
 
-function getEntities(modelID: number): { [key: string]: number[] } {
-  let entities: { [key: string]: number[] } = {};
+function getSearchData(modelID: number): { [key: string]: SearchData } {
+  let searchData: { [key: string]: SearchData } = {};
   for (const expressID of ifcapi.GetAllLines(modelID)) {
     const lineEntity = ifcapi.GetLine(modelID, expressID);
     const ifcClassName = ifcapi.GetNameFromTypeCode(lineEntity.type);
-    if (!entities[ifcClassName]) entities[ifcClassName] = [];
-    entities[ifcClassName].push(expressID);
+
+    const displayNames = [`#${expressID}`];
+    if ("GlobalId" in lineEntity && isIfcValue(lineEntity.GlobalId)) {
+      displayNames.push(lineEntity.GlobalId.value); //IfcGloballyUniqueId
+    }
+    if ("Name" in lineEntity && isIfcValue(lineEntity.Name)) {
+      displayNames.push(lineEntity.Name.value); // IfcLabel
+    }
+
+    if (!searchData[ifcClassName]) searchData[ifcClassName] = { items: [] };
+
+    searchData[ifcClassName].items.push({
+      id: expressID,
+      displayName: displayNames.join(" | "),
+    });
   }
-  return entities;
+  return searchData;
 }
 
-function loadBytes(bytes: Uint8Array): [IfcNode, { [key: string]: number[] }] {
+function loadBytes(bytes: Uint8Array): [IfcNode, { [key: string]: SearchData }] {
 
   if (global_modelID !== -1) {
     ifcapi.CloseModel(global_modelID);
@@ -56,20 +69,20 @@ function loadBytes(bytes: Uint8Array): [IfcNode, { [key: string]: number[] }] {
   global_modelID = ifcapi.OpenModel(bytes, settings);
   console.log("[processIfc] OpenModel success", global_modelID);
 
-  const entities = getEntities(global_modelID);
-  const ifcProjectId = entities["IfcProject"][0];
+  const searchData = getSearchData(global_modelID);
+  const rootEntityId = searchData["IfcProject"].items[0].id;
 
-  const ifcProjectNode = createIfcNode(global_modelID, ifcProjectId);
+  const rootNode = createIfcNode(global_modelID, rootEntityId);
 
-  return [ifcProjectNode, entities];
+  return [rootNode, searchData];
 }
 
-export function loadIfcFromText_impl(ifcText: string): [IfcNode, { [key: string]: number[]}] {
+export function loadIfcFromText_impl(ifcText: string): [IfcNode, { [key: string]: SearchData }] {
   const encoder = new TextEncoder();
   return loadBytes(encoder.encode(ifcText));
 }
 
-export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {
+export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: SearchData }]> {
   const rawFileData = await ifcFile.arrayBuffer();
   return loadBytes(new Uint8Array(rawFileData));
 }

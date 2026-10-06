@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 
 import NodeComponent from "./NodeComponent.vue";
 import EdgeComponent from "./EdgeComponent.vue";
-import { IfcNode, Edge, Position, Attribute } from "./interfaces";
+import { IfcNode, Edge, Position, Attribute, SearchData } from "./interfaces";
 import { hasValue } from "./utils";
 import PropertyArea from "./PropertyArea.vue";
 import SearchEntity from "./SearchEntity.vue";
@@ -32,7 +32,7 @@ const previousSelectedNodeIds = ref<number[]>([]);
 const dragStartNodePositions = ref<{ [id: number]: Position }>({});
 
 // IFCファイルの要素（右クリックメニュー表示用）
-const ifcElements = ref<{ [key: string]: number[] }>({});
+const ifcElements = ref<{ [key: string]: SearchData }>({});
 
 // 右クリックメニュー表示フラグ
 const showSearch = ref<boolean>(false);
@@ -174,9 +174,9 @@ function loadIfcFromText(fileName: string, ifcText: string) {
   isLoading.value = true;
 
   try {
-    const [node, entities] = loadIfcFromText_impl(ifcText);
+    const [node, searchData] = loadIfcFromText_impl(ifcText);
 
-    ifcElements.value = entities;
+    ifcElements.value = searchData;
     nodes.value.push(node);
   }
   catch(error) {
@@ -585,9 +585,14 @@ defineExpose({loadIfcFromText});
     </div>
 
     <!-- ノード追加メニュー -->
-    <div class="add-menu" v-if="showSearch" @click="closeSearch">
-      <SearchEntity :elements="ifcElements" @select="selectEntity" />
-    </div>
+    <template v-if="Object.keys(ifcElements).length === 0">
+      <div class="search-loading-text">Loading search data...</div>
+    </template>
+    <template v-else>
+      <div class="add-menu" v-if="showSearch" @click="closeSearch">
+        <SearchEntity :elements="ifcElements" @select="selectEntity" />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -703,5 +708,17 @@ defineExpose({loadIfcFromText});
 
 .align-icon:hover {
   background-color: rgba(129, 129, 129, 0.3);
+}
+
+.search-loading-text {
+  position: absolute;
+  z-index: -1;
+  top: 60px;
+  left: 20px;
+  width: 200px;
+  text-align: left;
+  color: gray;
+  font-style: italic;
+  padding: 8px 0;
 }
 </style>
