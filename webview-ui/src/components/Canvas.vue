@@ -321,6 +321,8 @@ const addNode_ = async (
   dstPosition: Position,
   idx: number
 ) => {
+  isLoading.value = true;
+
   try {
     const node = await addNode_impl(dstId);
 
@@ -385,6 +387,7 @@ const addNode_ = async (
   finally {
     // 描画中のエッジを削除
     updateDrawingEdge(null);
+    isLoading.value = false;
   }
 };
 
@@ -451,6 +454,8 @@ const selectEntity = (id: number) => {
 };
 
 const addNodeById = async (id: number, dstPosition: Position) => {
+  isLoading.value = true;
+
   try {
     const node = await addNodeById_impl(id);
 
@@ -462,6 +467,9 @@ const addNodeById = async (id: number, dstPosition: Position) => {
   }
   catch(error) {
     console.log(error);
+  }
+  finally {
+    isLoading.value = false;
   }
 };
 
@@ -499,7 +507,7 @@ defineExpose({loadIfcFromText});
   </h4>
 
   <!-- 処理中の表示 -->
-  <div v-if="isLoading" class="loading-overlay">Now Loading...</div>
+  <div :class="['loading-overlay', { active: isLoading }]">Processing...</div>
 
   <div class="container">
     <div
@@ -617,6 +625,14 @@ defineExpose({loadIfcFromText});
   color: white;
   font-size: 1.5em;
   z-index: 1000; /* 他の要素より前面に表示 */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.loading-overlay.active {
+  opacity: 1;
+  visibility: visible;
 }
 
 .canvas {
