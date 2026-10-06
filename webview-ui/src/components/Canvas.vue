@@ -168,16 +168,12 @@ function endDrag() {
   document.body.style.userSelect = "auto";
 }
 
-function putModelOnCanvas(model: IfcNode, entities: { [key: string]: number[] }) {
-  ifcElements.value = entities;
-  nodes.value.push(model);
-  fileOpen.value = true;
-}
-
 function loadIfcFromText(ifcText: string) {
   try {
     const [model, entities] = loadIfcFromText_impl(ifcText);
-    putModelOnCanvas(model, entities);
+    ifcElements.value = entities;
+    nodes.value.push(model);
+    fileOpen.value = true;
   }
   catch(error) {
     // エラー処理
