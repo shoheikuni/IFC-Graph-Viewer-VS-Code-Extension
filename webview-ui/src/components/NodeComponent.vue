@@ -80,7 +80,8 @@ const onMouseUp = () => {
 };
 
 // エッジドラッグ時のノード追加処理
-const onDotMouseDown = (event: MouseEvent, attribute: Attribute) => {
+const onDotMouseDown = (event: MouseEvent, attribute: Attribute | null) => {
+  if (!attribute) return;
   if (event.button === 2) {
     // 右クリックは処理しない
     return;
@@ -189,30 +190,9 @@ const onDotMouseUp = (attribute: Attribute) => {
   });
 };
 
-function stringifyValue(content: AttrContent | AttrContent[]) {
-  if (Array.isArray(content)) {
-    // 配列の場合、カンマ区切りの文字列に変換します
-    return `${content.map((v) => `#${v.value}`).join(", ")}`;
-  } else if (content.type === "id") {
-    // 数値はID
-    return `#${content.value}`;
-  } else {
-    // 配列でない場合、そのまま文字列に変換します
-    if (content.value == null)
-      return "null";
-    else
-      return content.value.toString();
-  }
-}
-stringifyValue;
-
 // id判定
-const isId = (content: AttrContent | AttrContent[]): boolean => {
-  if (Array.isArray(content)) {
-    return content[0].type === "id";
-  } else {
-    return content.type === "id";
-  }
+const isId = (contents: AttrContent[]): boolean => {
+  return contents[0].type === "id";
 };
 </script>
 
@@ -232,28 +212,24 @@ const isId = (content: AttrContent | AttrContent[]): boolean => {
       <span class="title truncate-text" :title="node.type">{{
         node.type
       }}</span>
-      <span class="icon"></span>
+      <span
+        :class="['icon', { 'icon-disabled': !node.reference }]"
+        @mousedown.prevent="(event) => onDotMouseDown(event, node.reference)"
+      ></span>
     </div>
     <div class="node-body">
       <template v-for="(attribute, _) in node.attributes" :key="attribute.name">
         <div
           class="attribute"
-          v-if="hasValue(attribute.content)"
+          v-if="hasValue(attribute.contents)"
           :class="{ 'inverse-attribute': attribute.inverse }"
         >
           <span class="truncate-text" :title="attribute.name">{{
             attribute.name
           }}</span>
-          <!--
-          <span
-            class="truncate-text"
-            :title="stringifyValue(attribute.content)"
-            >{{ stringifyValue(attribute.content) }}</span
-          >
-           -->
           <span
             class="dot"
-            v-if="isId(attribute.content)"
+            v-if="isId(attribute.contents)"
             @mousedown.prevent="(event) => onDotMouseDown(event, attribute)"
           ></span>
         </div>
@@ -299,9 +275,20 @@ const isId = (content: AttrContent | AttrContent[]): boolean => {
   left: -5px;
   height: 10px;
   width: 10px;
-  background-color: green;
+  background-color: #00cc99; /* 明るめの青っぽい緑 */
   color: white;
   border-radius: 50%;
+}
+.icon:hover {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5); /* 影を追加 */
+  background-color: #2dbd2d; /* 背景色を少し明るく */
+}
+/* node.reference が null の場合にホバー処理を無効化 */
+.icon-disabled {
+  pointer-events: none; /* イベントを無効化 */
+  background-color: green; /* 背景色を無効状態：暗めの緑に変更 */
+  box-shadow: none; /* 影を削除 */
+  cursor: default; /* 通常のカーソル */
 }
 
 .node-body {

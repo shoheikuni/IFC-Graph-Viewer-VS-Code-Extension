@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 
 import NodeComponent from "./NodeComponent.vue";
 import EdgeComponent from "./EdgeComponent.vue";
-import { IfcNode, Edge, Position, Attribute } from "./interfaces";
+import { IfcNode, Edge, Position, Attribute, SearchData } from "./interfaces";
 import { hasValue } from "./utils";
 import PropertyArea from "./PropertyArea.vue";
 import SearchEntity from "./SearchEntity.vue";
@@ -32,7 +32,7 @@ const previousSelectedNodeIds = ref<number[]>([]);
 const dragStartNodePositions = ref<{ [id: number]: Position }>({});
 
 // IFCファイルの要素（右クリックメニュー表示用）
-const ifcElements = ref<{ [key: string]: number[] }>({});
+const ifcElements = ref<{ [key: string]: SearchData }>({});
 
 // 右クリックメニュー表示フラグ
 const showSearch = ref<boolean>(false);
@@ -48,20 +48,59 @@ const rectSelecting = ref(false);
 // 右クリック位置
 const rightClickPosition = ref({ x: 0, y: 0 });
 
-const fileOpen = ref<Boolean>(false);
+const viewFilename = ref<string>("");
+const isLoading = ref(false);
 
 // 描画領域の拡大縮小、移動
 const scale = ref(1);
 const position = ref({ x: 0, y: 0 });
 const zoomContainer = ref<HTMLElement | null>(null);
 
+// サイドバーの幅（px）
+const sidebarWidth = ref(window.innerWidth * 0.25); // 初期値: 25vw
+const isResizingSidebar = ref(false);
+const minSidebarWidth = 200;
+const maxSidebarRatio = 0.75;
+
+// .canvas の幅もサイドバーの幅に合わせて可変にする
+const canvasWidth = computed(() => {
+  return `calc(100vw - ${sidebarWidth.value}px)`;
+});
+
+function onSidebarHandleMouseDown(e: MouseEvent) {
+  e.stopPropagation();
+  e.preventDefault();
+  isResizingSidebar.value = true;
+  document.body.style.cursor = "ew-resize";
+}
+
+function onSidebarHandleMouseMove(e: MouseEvent) {
+  if (!isResizingSidebar.value) return;
+  const newWidth = window.innerWidth - e.clientX;
+  sidebarWidth.value = Math.min(
+    Math.max(newWidth, minSidebarWidth),
+    window.innerWidth * maxSidebarRatio
+  );
+}
+
+function onSidebarHandleMouseUp() {
+  if (isResizingSidebar.value) {
+    isResizingSidebar.value = false;
+    document.body.style.cursor = "auto";
+  }
+}
+
 // ライフサイクルフック
 onMounted(() => {
   window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("mousemove", onSidebarHandleMouseMove);
+  window.addEventListener("mouseup", onSidebarHandleMouseUp);
 });
 
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeyDown);
+  window.removeEventListener("mousemove", onSidebarHandleMouseMove);
+  window.removeEventListener("mouseup", onSidebarHandleMouseUp);
 });
 
 // キーボードイベントのハンドラ
@@ -127,7 +166,7 @@ function drag(event: MouseEvent) {
         const right = nodePosition.x + 200;
         const top = nodePosition.y;
         const length = node.attributes.filter((attr) =>
-          hasValue(attr.content)
+          hasValue(attr.contents)
         ).length;
         // ヘッダーの高さ44px、bodyのpadding20px、属性の高さ29px
         const bottom = nodePosition.y + 44 + 20 + 29 * length;
@@ -168,16 +207,22 @@ function endDrag() {
   document.body.style.userSelect = "auto";
 }
 
-function loadIfcFromText(ifcText: string) {
+function loadIfcFromText(fileName: string, ifcText: string) {
+  viewFilename.value = fileName;
+  isLoading.value = true;
+
   try {
-    const [model, entities] = loadIfcFromText_impl(ifcText);
-    ifcElements.value = entities;
-    nodes.value.push(model);
-    fileOpen.value = true;
+    const [node, searchData] = loadIfcFromText_impl(ifcText);
+
+    ifcElements.value = searchData;
+    nodes.value.push(node);
   }
   catch(error) {
     // エラー処理
     console.error("ファイルの読み込みに失敗しました:", error);
+  }
+  finally {
+    isLoading.value = false;
   }
 }
 
@@ -306,14 +351,16 @@ const selectNode = (node: IfcNode, toggle = false) => {
 };
 
 // ノードを追加するハンドラ
-async function addNode_(
+const addNode_ = async (
   srcId: number,
   dstId: number,
   srcName: string,
   inverse: boolean,
   dstPosition: Position,
   idx: number
-) {
+) => {
+  isLoading.value = true;
+
   try {
     const node = await addNode_impl(dstId);
 
@@ -324,12 +371,8 @@ async function addNode_(
 
     // nodeIdと一致するattributeのnameを取得
     const targetAttr = node.attributes.find((attr) => {
-      if (Array.isArray(attr.content)) {
-        if (attr.content.find((c) => c.type === "id" && c.value === srcId)) {
+      if (attr.contents.find((c) => c.type === "id" && c.value === srcId)) {
           return true;
-        }
-      } else {
-        return attr.content.type === "id" && attr.content.value === srcId;
       }
     });
 
@@ -378,15 +421,16 @@ async function addNode_(
   finally {
     // 描画中のエッジを削除
     updateDrawingEdge(null);
+    isLoading.value = false;
   }
-}
+};
 
 const addNode = (
   nodeId: number,
   data: { position: Position; attribute: Attribute }
 ) => {
   // console.log(data);
-  const id = data.attribute.content;
+  const id = data.attribute.contents;
   const ids = Array.isArray(id) ? id : [id];
   ids.forEach((id, idx) => {
     addNode_(
@@ -443,7 +487,9 @@ const selectEntity = (id: number) => {
   addNodeById(id, { ...rightClickPosition.value });
 };
 
-async function addNodeById(id: number, dstPosition: Position) {
+const addNodeById = async (id: number, dstPosition: Position) => {
+  isLoading.value = true;
+
   try {
     const node = await addNodeById_impl(id);
 
@@ -456,7 +502,10 @@ async function addNodeById(id: number, dstPosition: Position) {
   catch(error) {
     console.log(error);
   }
-}
+  finally {
+    isLoading.value = false;
+  }
+};
 
 const getRelativePosition = (event: MouseEvent) => {
   const container = zoomContainer.value;
@@ -487,9 +536,22 @@ defineExpose({loadIfcFromText});
 </script>
 
 <template>
+  <h4 class="fileInput" style="margin-top: 0">
+    {{ viewFilename }}
+  </h4>
+
+  <!-- 処理中の表示 -->
+  <div :class="['loading-overlay', { active: isLoading }]">Processing...</div>
+
   <div class="container">
     <div
+      class="sidebar-resize-handle"
+      :style="{ right: sidebarWidth + 'px', height: '100vh' }"
+      @mousedown="onSidebarHandleMouseDown"
+    ></div>
+    <div
       class="canvas"
+      :style="{ width: canvasWidth }"
       @mousedown="startDrag"
       @mousemove="drag"
       @mouseup="endDrag"
@@ -560,16 +622,21 @@ defineExpose({loadIfcFromText});
     </div>
 
     <!-- 属性表示欄 -->
-    <div class="sidebar">
+    <div class="sidebar" :style="{ width: sidebarWidth + 'px' }">
       <div v-if="viewedAttrNode">
         <PropertyArea :node="viewedAttrNode" />
       </div>
     </div>
 
     <!-- ノード追加メニュー -->
-    <div class="add-menu" v-if="showSearch" @click="closeSearch">
-      <SearchEntity :elements="ifcElements" @select="selectEntity" />
-    </div>
+    <template v-if="Object.keys(ifcElements).length === 0">
+      <div class="search-loading-text">Loading search data...</div>
+    </template>
+    <template v-else>
+      <div class="add-menu" v-if="showSearch" @click="closeSearch">
+        <SearchEntity :elements="ifcElements" @select="selectEntity" />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -578,23 +645,74 @@ defineExpose({loadIfcFromText});
   display: flex;
   height: 100vh;
 }
+
+.fileInput {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明の背景 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5em;
+  z-index: 1000; /* 他の要素より前面に表示 */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.loading-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
 .canvas {
-  width: 75vw;
   height: 100vh;
   overflow: auto;
   position: relative;
 }
+
 .sidebar {
   position: absolute;
   top: 0;
   right: 0;
-  width: 25vw; /* 1/4 of the screen width */
-  height: 100vh; /* Full height of the container */
-  z-index: 2; /* Overlay on top of the canvas */
-  word-wrap: break-word; /* 長い単語でも折り返しを行う */
-  overflow: auto; /* 必要に応じてスクロールバーを表示 */
+  height: 100vh;
+  z-index: 2;
+  word-wrap: break-word;
+  overflow: auto;
   background-color: #f0f0f0;
 }
+
+.sidebar-resize-handle {
+  position: fixed;
+  top: 0;
+  width: 3px;
+  height: 100vh;
+  cursor: ew-resize;
+  background: #ccc;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+.sidebar-resize-handle:hover {
+  background: #888;
+  opacity: 0.8;
+}
+
 .node-container {
   transform-origin: 0 0;
   position: absolute;
@@ -603,6 +721,7 @@ defineExpose({loadIfcFromText});
   width: 100%;
   height: 100%;
 }
+
 .edge-container {
   position: absolute;
   top: 0;
@@ -610,11 +729,13 @@ defineExpose({loadIfcFromText});
   width: 100%;
   height: 100%;
 }
+
 .selection-rectangle {
   position: absolute;
   border: 2px dashed #4a90e2; /* 青い点線の境界線 */
   background-color: rgba(74, 144, 226, 0.3); /* 半透明の青色背景 */
 }
+
 .add-menu {
   position: absolute;
   overflow: auto;
@@ -623,6 +744,7 @@ defineExpose({loadIfcFromText});
   width: 100%;
   height: 100%;
 }
+
 .align-icons {
   position: absolute;
   top: 10px;
@@ -639,5 +761,17 @@ defineExpose({loadIfcFromText});
 
 .align-icon:hover {
   background-color: rgba(129, 129, 129, 0.3);
+}
+
+.search-loading-text {
+  position: absolute;
+  z-index: -1;
+  top: 60px;
+  left: 20px;
+  width: 200px;
+  text-align: left;
+  color: gray;
+  font-style: italic;
+  padding: 8px 0;
 }
 </style>

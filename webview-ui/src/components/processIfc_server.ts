@@ -1,12 +1,12 @@
 import axios from "axios";
-import { IfcNode } from "./interfaces";
+import { IfcNode, SearchData } from "./interfaces";
 import { hasValue } from "./utils";
 
 const endpoint = import.meta.env.VITE_API_ENDPOINT as string;
 
 let filepath = "";
 
-export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: number[] }]> {
+export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: string]: SearchData }]> {
 
   // FormData オブジェクトを作成してファイルを追加
   const formData = new FormData();
@@ -21,7 +21,7 @@ export async function loadFile_impl(ifcFile: File): Promise<[IfcNode, { [key: st
     })
     .then((response) => {
       filepath = response.data.path;
-      return [convertToNode(response.data.model), response.data.entities];
+      return [convertToNode(response.data.root), response.data.searchData];
     });
 }
 
@@ -61,6 +61,7 @@ function convertToNode(data: any): IfcNode {
   const node: IfcNode = {
     id: data.id,
     type: data.type,
+    reference: null,
     attributes: [],
     position: { x: 40, y: 60 },
   };
@@ -70,13 +71,24 @@ function convertToNode(data: any): IfcNode {
   for (const attr of data.attributes) {
     const attribute = {
       name: attr.name,
-      content: attr.content,
+      contents: attr.contents,
       edgePosition: { x: attr.inverse ? 0 : 200, y: 68 + count * 29 },
       inverse: attr.inverse,
     };
-    hasValue(attr.content) && count++;
+    hasValue(attr.contents) && count++;
     node.attributes.push(attribute);
   }
+
+  if (data.references.contents.length === 0) {
+    return node;
+  }
+  const reference = {
+    name: "Reference",
+    contents: data.references.contents,
+    edgePosition: { x: 0, y: 25 },
+    inverse: true,
+  };
+  node.reference = reference;
 
   return node;
 }

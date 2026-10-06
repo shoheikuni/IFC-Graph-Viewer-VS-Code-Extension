@@ -1,6 +1,7 @@
 export interface IfcNode {
   id: number;
   type: string;
+  reference: Attribute | null;
   attributes: Attribute[];
   position: Position;
   // folded: boolean; // 折りたたみ状態
@@ -8,17 +9,18 @@ export interface IfcNode {
 
 export interface Attribute {
   name: string;
-  content: AttrContent | AttrContent[]; // 接続先のIDまたはテキストデータ
+  contents: AttrContent[]; // 接続先のIDまたはテキストデータ
   inverse: boolean;
   edgePosition: Position; // エッジの接続位置
 }
 
-export type AttrContentValueType = string | number | Array<number> | null;
-export type AttrContentIdType = number | null;
+export type AttrContentType = "value" | "id";
+export type AttrContentValueType = string | number | number[];
+export type AttrContentIdType = number | number[];
 
 export interface AttrContent {
-  type: string; // "value" or "id"
-  value: AttrContentValueType | AttrContentIdType;
+  type: AttrContentType;
+  value: AttrContentValueType | AttrContentIdType | null;
 }
 
 // attrName = undefined はノードの左上に接続されているとき
@@ -37,4 +39,13 @@ export interface Edge {
 export interface Position {
   x: number;
   y: number;
+}
+
+export interface SearchData {
+  items: SearchItem[];
+}
+
+export interface SearchItem {
+  id: number;
+  displayName: string;
 }

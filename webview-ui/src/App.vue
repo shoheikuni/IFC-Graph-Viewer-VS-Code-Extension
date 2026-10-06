@@ -12,7 +12,7 @@ onMounted(async () => {
     if (event.data?.type === "loadIfc") {
       console.log(`[App] IFC file received: ${event.data.data.value}`);
       console.assert(processIfcInitialized());
-      canvas.value!.loadIfcFromText(event.data.data.ifcText);
+      canvas.value!.loadIfcFromText(event.data.data.fileName, event.data.data.ifcText);
     }
   });
 
